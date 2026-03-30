@@ -41,15 +41,15 @@ class ProductServiceTest {
     void setUp() {
         stratocaster = new Product(1, "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica de cuerpo sólido con pastillas V-Mod II",
-                1500.00, "Guitarras", "fender_strat.jpg", 8);
+                1500.00, "Guitarras", "fender_strat.jpg", 8, null, null);
 
         tubeScreamer = new Product(2, "Ibanez Tube Screamer TS9",
                 "Pedal de overdrive clásico, el favorito de Stevie Ray Vaughan",
-                120.00, "Pedales", "ts9.jpg", 15);
+                120.00, "Pedales", "ts9.jpg", 15, null, null);
 
         marshallDsl40 = new Product(3, "Marshall DSL40CR",
                 "Amplificador valvular de 40W con dos canales y reverb",
-                1200.00, "Amplificadores", "marshall_dsl40.jpg", 3);
+                1200.00, "Amplificadores", "marshall_dsl40.jpg", 3, null, null);
     }
 
     // -------------------------------------------------------------------------
@@ -131,7 +131,7 @@ class ProductServiceTest {
 
         Product guardado = new Product(4, "Vox AC30",
                 "Amplificador valvular de 30W, icono del sonido británico",
-                2200.00, "Amplificadores", "vox_ac30.jpg", 2);
+                2200.00, "Amplificadores", "vox_ac30.jpg", 2, null, null);
         when(repository.save(any())).thenReturn(guardado);
 
         ProductResponseDTO resultado = service.guardar(dto);
@@ -154,7 +154,7 @@ class ProductServiceTest {
 
         Product guardado = new Product(5, "Boss DS-1 Distortion",
                 "Pedal de distorsión compacto, el más vendido en la historia",
-                80.00, "Pedales", "boss_ds1.jpg", 20);
+                80.00, "Pedales", "boss_ds1.jpg", 20, null, null);
         when(repository.save(any())).thenReturn(guardado);
 
         ProductResponseDTO resultado = service.guardar(dto);
@@ -269,7 +269,7 @@ class ProductServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Product lesPaul = new Product(6, "Gibson Les Paul Standard",
                 "Guitarra eléctrica con cuerpo de caoba y tapa de arce flameado",
-                2800.00, "Guitarras", "gibson_lp.jpg", 2);
+                2800.00, "Guitarras", "gibson_lp.jpg", 2, null, null);
 
         when(repository.findByCategoriaIgnoreCase("guitarras", pageable))
                 .thenReturn(new PageImpl<>(List.of(stratocaster, lesPaul)));
@@ -286,7 +286,7 @@ class ProductServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Product hallOfFame = new Product(7, "TC Electronic Hall of Fame 2",
                 "Pedal de reverb con TonePrint y algoritmos de sala",
-                150.00, "Pedales", "hof2.jpg", 12);
+                150.00, "Pedales", "hof2.jpg", 12, null, null);
 
         when(repository.findByCategoriaIgnoreCase("PEDALES", pageable))
                 .thenReturn(new PageImpl<>(List.of(tubeScreamer, hallOfFame)));
@@ -314,7 +314,7 @@ class ProductServiceTest {
     void stockMinimo_retornaAmplificadoresConStockBajo() {
         Pageable pageable = PageRequest.of(0, 10);
         Product voxAC30 = new Product(4, "Vox AC30",
-                "Amplificador valvular de 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
+                "Amplificador valvular de 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1, null, null);
 
         when(repository.findByStockLessThanEqual(5, pageable))
                 .thenReturn(new PageImpl<>(List.of(marshallDsl40, voxAC30)));

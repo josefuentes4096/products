@@ -40,19 +40,19 @@ class OrderServiceTest {
     void setUp() {
         stratocaster = new Product(1, "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica con pastillas V-Mod II",
-                1500.00, "Guitarras", "fender_strat.jpg", 5);
+                1500.00, "Guitarras", "fender_strat.jpg", 5, null, null);
 
         bossDS1 = new Product(2, "Boss DS-1 Distortion",
                 "Pedal de distorsión compacto clásico",
-                80.00, "Pedales", "boss_ds1.jpg", 20);
+                80.00, "Pedales", "boss_ds1.jpg", 20, null, null);
 
         marshallDsl40 = new Product(3, "Marshall DSL40CR",
                 "Amplificador valvular de 40W dos canales",
-                1200.00, "Amplificadores", "marshall_dsl40.jpg", 2);
+                1200.00, "Amplificadores", "marshall_dsl40.jpg", 2, null, null);
 
         voxAC30 = new Product(4, "Vox AC30",
                 "Amplificador valvular de 30W, icono del britpop",
-                2200.00, "Amplificadores", "vox_ac30.jpg", 1);
+                2200.00, "Amplificadores", "vox_ac30.jpg", 1, null, null);
     }
 
     // -------------------------------------------------------------------------
@@ -71,7 +71,7 @@ class OrderServiceTest {
     }
 
     private Order savedOrder(int id, int usuarioId, double total) {
-        return new Order(id, usuarioId, OrderStatus.PENDIENTE, total, List.of());
+        return new Order(id, usuarioId, OrderStatus.PENDIENTE, total, List.of(), null, null);
     }
 
     // -------------------------------------------------------------------------
@@ -283,7 +283,7 @@ class OrderServiceTest {
         when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
         when(productRepository.findById(2)).thenReturn(Optional.of(bossDS1));
 
-        Order saved = new Order(22, 8, OrderStatus.PENDIENTE, 1900.00, List.of());
+        Order saved = new Order(22, 8, OrderStatus.PENDIENTE, 1900.00, List.of(), null, null);
         when(orderRepository.save(any())).thenReturn(saved);
 
         OrderResponseDTO resultado = service.crearPedido(request);
