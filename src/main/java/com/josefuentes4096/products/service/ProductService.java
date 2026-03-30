@@ -1,6 +1,7 @@
 package com.josefuentes4096.products.service;
 
 import com.josefuentes4096.products.entity.Product;
+import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class ProductService {
 
     public Product obtenerPorId(Integer id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product no encontrado"));
+                .orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     public Product guardar(Product product) {
@@ -40,6 +41,7 @@ public class ProductService {
     }
 
     public void eliminar(Integer id) {
+		obtenerPorId(id);
         repository.deleteById(id);
     }
 }
