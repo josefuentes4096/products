@@ -2,6 +2,7 @@ package com.josefuentes4096.products.controller;
 
 import com.josefuentes4096.products.entity.Product;
 import com.josefuentes4096.products.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,13 +26,13 @@ public class ProductController {
     }
 
     @PostMapping
-    public Product crear(@RequestBody Product product) {
+    public Product crear(@RequestBody @Valid Product product) {
         return service.guardar(product);
     }
 
     @PutMapping("/{id}")
     public Product actualizar(@PathVariable Integer id,
-                               @RequestBody Product product) {
+                              @RequestBody @Valid Product product) {
         return service.actualizar(id, product);
     }
 
