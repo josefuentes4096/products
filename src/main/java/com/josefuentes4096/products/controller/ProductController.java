@@ -5,9 +5,10 @@ import com.josefuentes4096.products.dto.ProductResponseDTO;
 import com.josefuentes4096.products.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -17,8 +18,9 @@ public class ProductController {
     private final ProductService service;
 
     @GetMapping
-    public List<ProductResponseDTO> listar() {
-        return service.listar();
+    public Page<ProductResponseDTO> listar(
+            @PageableDefault(size = 10, sort = "nombre") Pageable pageable) {
+        return service.listar(pageable);
     }
 
     @GetMapping("/{id}")
@@ -48,14 +50,16 @@ public class ProductController {
     }
 
     @GetMapping("/categoria/{categoria}")
-    public List<ProductResponseDTO> filtrarPorCategoria(
-            @PathVariable String categoria) {
-        return service.filtrarPorCategoria(categoria);
+    public Page<ProductResponseDTO> filtrarPorCategoria(
+            @PathVariable String categoria,
+            @PageableDefault(size = 10, sort = "nombre") Pageable pageable) {
+        return service.filtrarPorCategoria(categoria, pageable);
     }
 
     @GetMapping("/stock-minimo")
-    public List<ProductResponseDTO> stockMinimo(
-            @RequestParam(defaultValue = "5") Integer min) {
-        return service.stockMinimo(min);
+    public Page<ProductResponseDTO> stockMinimo(
+            @RequestParam(defaultValue = "5") Integer min,
+            @PageableDefault(size = 10, sort = "stock") Pageable pageable) {
+        return service.stockMinimo(min, pageable);
     }
 }

@@ -12,6 +12,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -53,12 +58,14 @@ class ProductServiceTest {
 
     @Test
     void listar_retornaTodosLosInstrumentos() {
-        when(repository.findAll()).thenReturn(List.of(stratocaster, tubeScreamer, marshallDsl40));
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(stratocaster, tubeScreamer, marshallDsl40)));
 
-        List<ProductResponseDTO> resultado = service.listar();
+        Page<ProductResponseDTO> resultado = service.listar(pageable);
 
-        assertThat(resultado).hasSize(3);
-        assertThat(resultado).extracting(ProductResponseDTO::getNombre)
+        assertThat(resultado.getContent()).hasSize(3);
+        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getNombre)
                 .containsExactly(
                         "Fender Stratocaster American Pro II",
                         "Ibanez Tube Screamer TS9",
@@ -67,9 +74,10 @@ class ProductServiceTest {
 
     @Test
     void listar_retornaListaVaciaSiNoHayProductos() {
-        when(repository.findAll()).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findAll(pageable)).thenReturn(Page.empty());
 
-        assertThat(service.listar()).isEmpty();
+        assertThat(service.listar(pageable).getContent()).isEmpty();
     }
 
     // -------------------------------------------------------------------------
@@ -258,41 +266,44 @@ class ProductServiceTest {
 
     @Test
     void filtrarPorCategoria_retornaGuitarrasDeLaCategoria() {
+        Pageable pageable = PageRequest.of(0, 10);
         Product lesPaul = new Product(6, "Gibson Les Paul Standard",
                 "Guitarra eléctrica con cuerpo de caoba y tapa de arce flameado",
                 2800.00, "Guitarras", "gibson_lp.jpg", 2);
 
-        when(repository.findByCategoriaIgnoreCase("guitarras"))
-                .thenReturn(List.of(stratocaster, lesPaul));
+        when(repository.findByCategoriaIgnoreCase("guitarras", pageable))
+                .thenReturn(new PageImpl<>(List.of(stratocaster, lesPaul)));
 
-        List<ProductResponseDTO> resultado = service.filtrarPorCategoria("guitarras");
+        Page<ProductResponseDTO> resultado = service.filtrarPorCategoria("guitarras", pageable);
 
-        assertThat(resultado).hasSize(2);
-        assertThat(resultado).extracting(ProductResponseDTO::getCategoria)
+        assertThat(resultado.getContent()).hasSize(2);
+        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getCategoria)
                 .containsOnly("Guitarras");
     }
 
     @Test
     void filtrarPorCategoria_retornaPedalesIgnorandoMayusculas() {
+        Pageable pageable = PageRequest.of(0, 10);
         Product hallOfFame = new Product(7, "TC Electronic Hall of Fame 2",
                 "Pedal de reverb con TonePrint y algoritmos de sala",
                 150.00, "Pedales", "hof2.jpg", 12);
 
-        when(repository.findByCategoriaIgnoreCase("PEDALES"))
-                .thenReturn(List.of(tubeScreamer, hallOfFame));
+        when(repository.findByCategoriaIgnoreCase("PEDALES", pageable))
+                .thenReturn(new PageImpl<>(List.of(tubeScreamer, hallOfFame)));
 
-        List<ProductResponseDTO> resultado = service.filtrarPorCategoria("PEDALES");
+        Page<ProductResponseDTO> resultado = service.filtrarPorCategoria("PEDALES", pageable);
 
-        assertThat(resultado).hasSize(2);
-        assertThat(resultado).extracting(ProductResponseDTO::getNombre)
+        assertThat(resultado.getContent()).hasSize(2);
+        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getNombre)
                 .contains("Ibanez Tube Screamer TS9", "TC Electronic Hall of Fame 2");
     }
 
     @Test
     void filtrarPorCategoria_retornaListaVaciaSiNoHayProductosEnCategoria() {
-        when(repository.findByCategoriaIgnoreCase("Baterías")).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findByCategoriaIgnoreCase("Baterías", pageable)).thenReturn(Page.empty());
 
-        assertThat(service.filtrarPorCategoria("Baterías")).isEmpty();
+        assertThat(service.filtrarPorCategoria("Baterías", pageable).getContent()).isEmpty();
     }
 
     // -------------------------------------------------------------------------
@@ -301,35 +312,38 @@ class ProductServiceTest {
 
     @Test
     void stockMinimo_retornaAmplificadoresConStockBajo() {
-        // marshallDsl40 tiene stock 3, voxAC30 tiene stock 1
+        Pageable pageable = PageRequest.of(0, 10);
         Product voxAC30 = new Product(4, "Vox AC30",
                 "Amplificador valvular de 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
 
-        when(repository.findByStockLessThanEqual(5))
-                .thenReturn(List.of(marshallDsl40, voxAC30));
+        when(repository.findByStockLessThanEqual(5, pageable))
+                .thenReturn(new PageImpl<>(List.of(marshallDsl40, voxAC30)));
 
-        List<ProductResponseDTO> resultado = service.stockMinimo(5);
+        Page<ProductResponseDTO> resultado = service.stockMinimo(5, pageable);
 
-        assertThat(resultado).hasSize(2);
-        assertThat(resultado).extracting(ProductResponseDTO::getStock)
+        assertThat(resultado.getContent()).hasSize(2);
+        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getStock)
                 .allMatch(stock -> stock <= 5);
     }
 
     @Test
     void stockMinimo_retornaListaVaciaSiTodosLosProductosTienenStockSuficiente() {
-        when(repository.findByStockLessThanEqual(0)).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findByStockLessThanEqual(0, pageable)).thenReturn(Page.empty());
 
-        assertThat(service.stockMinimo(0)).isEmpty();
+        assertThat(service.stockMinimo(0, pageable).getContent()).isEmpty();
     }
 
     @Test
     void stockMinimo_usaElValorMinimoPasadoComoParametro() {
-        when(repository.findByStockLessThanEqual(3)).thenReturn(List.of(marshallDsl40));
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findByStockLessThanEqual(3, pageable))
+                .thenReturn(new PageImpl<>(List.of(marshallDsl40)));
 
-        List<ProductResponseDTO> resultado = service.stockMinimo(3);
+        Page<ProductResponseDTO> resultado = service.stockMinimo(3, pageable);
 
-        assertThat(resultado).hasSize(1);
-        assertThat(resultado.get(0).getNombre()).isEqualTo("Marshall DSL40CR");
-        verify(repository).findByStockLessThanEqual(3);
+        assertThat(resultado.getContent()).hasSize(1);
+        assertThat(resultado.getContent().get(0).getNombre()).isEqualTo("Marshall DSL40CR");
+        verify(repository).findByStockLessThanEqual(3, pageable);
     }
 }

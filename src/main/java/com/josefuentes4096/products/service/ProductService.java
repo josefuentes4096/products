@@ -7,10 +7,10 @@ import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -19,12 +19,9 @@ public class ProductService {
 
     private final ProductRepository repository;
 
-    public List<ProductResponseDTO> listar() {
-        log.info("Listando todos los productos");
-        return repository.findAll()
-                .stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<ProductResponseDTO> listar(Pageable pageable) {
+        log.info("Listando productos - página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
+        return repository.findAll(pageable).map(this::toDTO);
     }
 
     public ProductResponseDTO obtenerPorId(Integer id) {
@@ -86,20 +83,14 @@ public class ProductService {
                 });
     }
 
-    public List<ProductResponseDTO> filtrarPorCategoria(String categoria) {
+    public Page<ProductResponseDTO> filtrarPorCategoria(String categoria, Pageable pageable) {
         log.info("Filtrando productos por categoría: {}", categoria);
-        return repository.findByCategoriaIgnoreCase(categoria)
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        return repository.findByCategoriaIgnoreCase(categoria, pageable).map(this::toDTO);
     }
 
-    public List<ProductResponseDTO> stockMinimo(Integer min) {
+    public Page<ProductResponseDTO> stockMinimo(Integer min, Pageable pageable) {
         log.info("Buscando productos con stock <= {}", min);
-        return repository.findByStockLessThanEqual(min)
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        return repository.findByStockLessThanEqual(min, pageable).map(this::toDTO);
     }
 
     private ProductResponseDTO toDTO(Product p) {

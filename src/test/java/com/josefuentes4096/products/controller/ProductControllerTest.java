@@ -13,6 +13,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -69,24 +73,24 @@ class ProductControllerTest {
 
     @Test
     void GET_listar_retorna200ConTodosLosInstrumentos() throws Exception {
-        when(service.listar()).thenReturn(
-                List.of(stratocasterResponse(), tubeScreamerResponse(), marshallResponse()));
+        when(service.listar(any(Pageable.class))).thenReturn(
+                new PageImpl<>(List.of(stratocasterResponse(), tubeScreamerResponse(), marshallResponse())));
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(3))
-                .andExpect(jsonPath("$[0].nombre").value("Fender Stratocaster American Pro II"))
-                .andExpect(jsonPath("$[1].nombre").value("Ibanez Tube Screamer TS9"))
-                .andExpect(jsonPath("$[2].nombre").value("Marshall DSL40CR"));
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.content[0].nombre").value("Fender Stratocaster American Pro II"))
+                .andExpect(jsonPath("$.content[1].nombre").value("Ibanez Tube Screamer TS9"))
+                .andExpect(jsonPath("$.content[2].nombre").value("Marshall DSL40CR"));
     }
 
     @Test
     void GET_listar_retorna200ConListaVaciaSiNoHayInstrumentos() throws Exception {
-        when(service.listar()).thenReturn(List.of());
+        when(service.listar(any(Pageable.class))).thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     // -------------------------------------------------------------------------
@@ -304,14 +308,14 @@ class ProductControllerTest {
         ProductResponseDTO voxResponse = new ProductResponseDTO(4, "Vox AC30",
                 "Amplificador valvular 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
 
-        when(service.filtrarPorCategoria("Amplificadores"))
-                .thenReturn(List.of(marshallResponse(), voxResponse));
+        when(service.filtrarPorCategoria(eq("Amplificadores"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(marshallResponse(), voxResponse)));
 
         mockMvc.perform(get("/api/products/categoria/Amplificadores"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].categoria").value("Amplificadores"))
-                .andExpect(jsonPath("$[1].nombre").value("Vox AC30"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].categoria").value("Amplificadores"))
+                .andExpect(jsonPath("$.content[1].nombre").value("Vox AC30"));
     }
 
     @Test
@@ -321,14 +325,14 @@ class ProductControllerTest {
                 "Pedal de reverb con TonePrint",
                 150.00, "Pedales", "hof2.jpg", 12);
 
-        when(service.filtrarPorCategoria("Pedales"))
-                .thenReturn(List.of(tubeScreamerResponse(), hallOfFameResponse));
+        when(service.filtrarPorCategoria(eq("Pedales"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(tubeScreamerResponse(), hallOfFameResponse)));
 
         mockMvc.perform(get("/api/products/categoria/Pedales"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].nombre").value("Ibanez Tube Screamer TS9"))
-                .andExpect(jsonPath("$[1].nombre").value("TC Electronic Hall of Fame 2"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].nombre").value("Ibanez Tube Screamer TS9"))
+                .andExpect(jsonPath("$.content[1].nombre").value("TC Electronic Hall of Fame 2"));
     }
 
     // -------------------------------------------------------------------------
@@ -337,14 +341,15 @@ class ProductControllerTest {
 
     @Test
     void GET_stockMinimo_usaDefault5YRetornaAmplificadoresConBajoStock() throws Exception {
-        when(service.stockMinimo(5)).thenReturn(List.of(marshallResponse()));
+        when(service.stockMinimo(eq(5), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(marshallResponse())));
 
         mockMvc.perform(get("/api/products/stock-minimo"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nombre").value("Marshall DSL40CR"))
-                .andExpect(jsonPath("$[0].stock").value(3));
+                .andExpect(jsonPath("$.content[0].nombre").value("Marshall DSL40CR"))
+                .andExpect(jsonPath("$.content[0].stock").value(3));
 
-        verify(service).stockMinimo(5);
+        verify(service).stockMinimo(eq(5), any(Pageable.class));
     }
 
     @Test
@@ -352,22 +357,23 @@ class ProductControllerTest {
         ProductResponseDTO voxResponse = new ProductResponseDTO(4, "Vox AC30",
                 "Amplificador valvular 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
 
-        when(service.stockMinimo(2)).thenReturn(List.of(voxResponse));
+        when(service.stockMinimo(eq(2), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(voxResponse)));
 
         mockMvc.perform(get("/api/products/stock-minimo").param("min", "2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].nombre").value("Vox AC30"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].nombre").value("Vox AC30"));
 
-        verify(service).stockMinimo(2);
+        verify(service).stockMinimo(eq(2), any(Pageable.class));
     }
 
     @Test
     void GET_stockMinimo_retornaListaVaciaSiTodosLosInstrumentosTienenStock() throws Exception {
-        when(service.stockMinimo(5)).thenReturn(List.of());
+        when(service.stockMinimo(eq(5), any(Pageable.class))).thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/products/stock-minimo"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 }
