@@ -248,8 +248,8 @@ class ProductServiceTest {
         when(repository.findByNombre("Gibson Les Paul Custom")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.buscarPorNombre("Gibson Les Paul Custom"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("no encontrado");
+                .isInstanceOf(ProductNotFoundException.class)
+                .hasMessageContaining("Gibson Les Paul Custom");
     }
 
     // -------------------------------------------------------------------------

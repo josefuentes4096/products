@@ -56,7 +56,7 @@ public class ProductService {
     public ProductResponseDTO buscarPorNombre(String nombre) {
         return repository.findByNombre(nombre)
                 .map(this::toDTO)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ProductNotFoundException(nombre));
     }
 
     public List<ProductResponseDTO> filtrarPorCategoria(String categoria) {
