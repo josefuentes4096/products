@@ -8,12 +8,14 @@ import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.repository.OrderRepository;
 import com.josefuentes4096.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -23,6 +25,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponseDTO crearPedido(OrderRequestDTO request) {
+        log.info("Creando pedido para usuario: {}", request.getUsuarioId());
 
         List<OrderItem> entidades = new ArrayList<>();
         List<OrderItemResponseDTO> responseItems = new ArrayList<>();
@@ -31,13 +34,18 @@ public class OrderService {
         for (OrderItemRequestDTO dto : request.getItems()) {
 
             Product product = productRepository.findById(dto.getProductoId())
-                    .orElseThrow(() -> new ProductNotFoundException(dto.getProductoId()));
+                    .orElseThrow(() -> {
+                        log.warn("Producto no encontrado con id: {}", dto.getProductoId());
+                        return new ProductNotFoundException(dto.getProductoId());
+                    });
 
             if (product.getStock() < dto.getCantidad()) {
+                log.warn("Stock insuficiente para '{}': stock={}, solicitado={}", product.getNombre(), product.getStock(), dto.getCantidad());
                 throw new InsufficientStockException(product.getNombre());
             }
 
             product.setStock(product.getStock() - dto.getCantidad());
+            log.debug("Stock actualizado para '{}': nuevo stock={}", product.getNombre(), product.getStock());
 
             double subtotal = product.getPrecio() * dto.getCantidad();
 
@@ -65,6 +73,7 @@ public class OrderService {
         order.setItems(entidades);
 
         Order saved = orderRepository.save(order);
+        log.info("Pedido creado con id: {}, total: {}", saved.getId(), saved.getTotal());
 
         return new OrderResponseDTO(
                 saved.getId(),
@@ -76,6 +85,7 @@ public class OrderService {
     }
 
     public List<OrderResponseDTO> obtenerHistorial(Integer usuarioId) {
+        log.info("Consultando historial de pedidos para usuario: {}", usuarioId);
         return orderRepository.findByUsuarioId(usuarioId)
                 .stream()
                 .map(this::toDTO)

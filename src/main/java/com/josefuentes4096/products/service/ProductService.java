@@ -6,10 +6,12 @@ import com.josefuentes4096.products.entity.Product;
 import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -17,6 +19,7 @@ public class ProductService {
     private final ProductRepository repository;
 
     public List<ProductResponseDTO> listar() {
+        log.info("Listando todos los productos");
         return repository.findAll()
                 .stream()
                 .map(this::toDTO)
@@ -24,18 +27,29 @@ public class ProductService {
     }
 
     public ProductResponseDTO obtenerPorId(Integer id) {
+        log.info("Buscando producto con id: {}", id);
         return toDTO(repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id)));
+                .orElseThrow(() -> {
+                    log.warn("Producto no encontrado con id: {}", id);
+                    return new ProductNotFoundException(id);
+                }));
     }
 
     public ProductResponseDTO guardar(ProductRequestDTO dto) {
+        log.info("Creando producto: {}", dto.getNombre());
         Product product = toEntity(dto);
-        return toDTO(repository.save(product));
+        ProductResponseDTO resultado = toDTO(repository.save(product));
+        log.info("Producto creado con id: {}", resultado.getId());
+        return resultado;
     }
 
     public ProductResponseDTO actualizar(Integer id, ProductRequestDTO dto) {
+        log.info("Actualizando producto con id: {}", id);
         Product product = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> {
+                    log.warn("Producto no encontrado con id: {}", id);
+                    return new ProductNotFoundException(id);
+                });
 
         product.setNombre(dto.getNombre());
         product.setDescripcion(dto.getDescripcion());
@@ -48,18 +62,28 @@ public class ProductService {
     }
 
     public void eliminar(Integer id) {
+        log.info("Eliminando producto con id: {}", id);
         Product product = repository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> {
+                    log.warn("Producto no encontrado con id: {}", id);
+                    return new ProductNotFoundException(id);
+                });
         repository.delete(product);
+        log.info("Producto con id: {} eliminado", id);
     }
 
     public ProductResponseDTO buscarPorNombre(String nombre) {
+        log.info("Buscando producto con nombre: {}", nombre);
         return repository.findByNombre(nombre)
                 .map(this::toDTO)
-                .orElseThrow(() -> new ProductNotFoundException(nombre));
+                .orElseThrow(() -> {
+                    log.warn("Producto no encontrado con nombre: {}", nombre);
+                    return new ProductNotFoundException(nombre);
+                });
     }
 
     public List<ProductResponseDTO> filtrarPorCategoria(String categoria) {
+        log.info("Filtrando productos por categoría: {}", categoria);
         return repository.findByCategoriaIgnoreCase(categoria)
                 .stream()
                 .map(this::toDTO)
@@ -67,6 +91,7 @@ public class ProductService {
     }
 
     public List<ProductResponseDTO> stockMinimo(Integer min) {
+        log.info("Buscando productos con stock <= {}", min);
         return repository.findByStockLessThanEqual(min)
                 .stream()
                 .map(this::toDTO)
