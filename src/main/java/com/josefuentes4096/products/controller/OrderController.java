@@ -1,5 +1,7 @@
 package com.josefuentes4096.products.controller;
 
+import com.josefuentes4096.products.dto.OrderRequestDTO;
+import com.josefuentes4096.products.dto.OrderResponseDTO;
 import com.josefuentes4096.products.entity.Order;
 import com.josefuentes4096.products.repository.OrderRepository;
 import com.josefuentes4096.products.service.OrderService;
@@ -17,8 +19,8 @@ public class OrderController {
     private final OrderRepository repository;
 
     @PostMapping
-    public Order crear(@RequestBody Order order) {
-        return service.crearPedido(order);
+    public OrderResponseDTO crear(@RequestBody OrderRequestDTO request) {
+        return service.crearPedido(request);
     }
 
     @GetMapping("/usuario/{usuarioId}")
