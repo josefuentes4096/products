@@ -1,4 +1,4 @@
-package com.josefuentes4096.products.exception;
+	package com.josefuentes4096.products.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,4 +27,9 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(errors);
     }
+
+	@ExceptionHandler(InsufficientStockException.class)
+	public ResponseEntity<String> handleStock(InsufficientStockException ex) {
+		return ResponseEntity.badRequest().body(ex.getMessage());
+	}
 }
