@@ -8,14 +8,13 @@ import com.josefuentes4096.products.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
@@ -58,11 +57,11 @@ class ProductControllerTest {
 
     private ProductRequestDTO stratocasterRequest() {
         ProductRequestDTO dto = new ProductRequestDTO();
-        dto.setNombre("Fender Stratocaster American Pro II");
-        dto.setDescripcion("Guitarra eléctrica con pastillas V-Mod II");
-        dto.setPrecio(1500.00);
-        dto.setCategoria("Guitarras");
-        dto.setImagenUrl("fender_strat.jpg");
+        dto.setName("Fender Stratocaster American Pro II");
+        dto.setDescription("Guitarra eléctrica con pastillas V-Mod II");
+        dto.setPrice(1500.00);
+        dto.setCategory("Guitarras");
+        dto.setImageUrl("fender_strat.jpg");
         dto.setStock(8);
         return dto;
     }
@@ -72,21 +71,21 @@ class ProductControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void GET_listar_retorna200ConTodosLosInstrumentos() throws Exception {
-        when(service.listar(any(Pageable.class))).thenReturn(
+    void GET_findAll_retorna200ConTodosLosInstrumentos() throws Exception {
+        when(service.findAll(any(Pageable.class))).thenReturn(
                 new PageImpl<>(List.of(stratocasterResponse(), tubeScreamerResponse(), marshallResponse())));
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(3))
-                .andExpect(jsonPath("$.content[0].nombre").value("Fender Stratocaster American Pro II"))
-                .andExpect(jsonPath("$.content[1].nombre").value("Ibanez Tube Screamer TS9"))
-                .andExpect(jsonPath("$.content[2].nombre").value("Marshall DSL40CR"));
+                .andExpect(jsonPath("$.content[0].name").value("Fender Stratocaster American Pro II"))
+                .andExpect(jsonPath("$.content[1].name").value("Ibanez Tube Screamer TS9"))
+                .andExpect(jsonPath("$.content[2].name").value("Marshall DSL40CR"));
     }
 
     @Test
-    void GET_listar_retorna200ConListaVaciaSiNoHayInstrumentos() throws Exception {
-        when(service.listar(any(Pageable.class))).thenReturn(Page.empty());
+    void GET_findAll_retorna200ConListaVaciaSiNoHayInstrumentos() throws Exception {
+        when(service.findAll(any(Pageable.class))).thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
@@ -98,30 +97,30 @@ class ProductControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void GET_obtener_retorna200ConGuitarraCuandoExiste() throws Exception {
-        when(service.obtenerPorId(1)).thenReturn(stratocasterResponse());
+    void GET_findById_retorna200ConGuitarraCuandoExiste() throws Exception {
+        when(service.findById(1)).thenReturn(stratocasterResponse());
 
         mockMvc.perform(get("/api/products/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.nombre").value("Fender Stratocaster American Pro II"))
-                .andExpect(jsonPath("$.precio").value(1500.00))
-                .andExpect(jsonPath("$.categoria").value("Guitarras"));
+                .andExpect(jsonPath("$.name").value("Fender Stratocaster American Pro II"))
+                .andExpect(jsonPath("$.price").value(1500.00))
+                .andExpect(jsonPath("$.category").value("Guitarras"));
     }
 
     @Test
-    void GET_obtener_retorna200ConPedalCuandoExiste() throws Exception {
-        when(service.obtenerPorId(2)).thenReturn(tubeScreamerResponse());
+    void GET_findById_retorna200ConPedalCuandoExiste() throws Exception {
+        when(service.findById(2)).thenReturn(tubeScreamerResponse());
 
         mockMvc.perform(get("/api/products/2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Ibanez Tube Screamer TS9"))
-                .andExpect(jsonPath("$.categoria").value("Pedales"));
+                .andExpect(jsonPath("$.name").value("Ibanez Tube Screamer TS9"))
+                .andExpect(jsonPath("$.category").value("Pedales"));
     }
 
     @Test
-    void GET_obtener_retorna404CuandoInstrumentoNoExiste() throws Exception {
-        when(service.obtenerPorId(99)).thenThrow(new ProductNotFoundException(99));
+    void GET_findById_retorna404CuandoInstrumentoNoExiste() throws Exception {
+        when(service.findById(99)).thenThrow(new ProductNotFoundException(99));
 
         mockMvc.perform(get("/api/products/99"))
                 .andExpect(status().isNotFound());
@@ -132,57 +131,57 @@ class ProductControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void POST_crear_retorna200AlCrearAmplificadorValvular() throws Exception {
+    void POST_create_retorna200AlCrearAmplificadorValvular() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
-        request.setNombre("Vox AC30");
-        request.setDescripcion("Amplificador valvular 30W icono del sonido británico");
-        request.setPrecio(2200.00);
-        request.setCategoria("Amplificadores");
-        request.setImagenUrl("vox_ac30.jpg");
+        request.setName("Vox AC30");
+        request.setDescription("Amplificador valvular 30W icono del sonido británico");
+        request.setPrice(2200.00);
+        request.setCategory("Amplificadores");
+        request.setImageUrl("vox_ac30.jpg");
         request.setStock(2);
 
         ProductResponseDTO response = new ProductResponseDTO(4, "Vox AC30",
                 "Amplificador valvular 30W icono del sonido británico",
                 2200.00, "Amplificadores", "vox_ac30.jpg", 2);
-        when(service.guardar(any())).thenReturn(response);
+        when(service.save(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/products").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Vox AC30"))
-                .andExpect(jsonPath("$.precio").value(2200.00))
-                .andExpect(jsonPath("$.categoria").value("Amplificadores"));
+                .andExpect(jsonPath("$.name").value("Vox AC30"))
+                .andExpect(jsonPath("$.price").value(2200.00))
+                .andExpect(jsonPath("$.category").value("Amplificadores"));
     }
 
     @Test
-    void POST_crear_retorna200AlCrearPedalDeEfecto() throws Exception {
+    void POST_create_retorna200AlCrearPedalDeEfecto() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
-        request.setNombre("Boss DS-1 Distortion");
-        request.setDescripcion("Pedal de distorsión compacto más vendido de la historia");
-        request.setPrecio(80.00);
-        request.setCategoria("Pedales");
-        request.setImagenUrl("boss_ds1.jpg");
+        request.setName("Boss DS-1 Distortion");
+        request.setDescription("Pedal de distorsión compacto más vendido de la historia");
+        request.setPrice(80.00);
+        request.setCategory("Pedales");
+        request.setImageUrl("boss_ds1.jpg");
         request.setStock(25);
 
         ProductResponseDTO response = new ProductResponseDTO(5, "Boss DS-1 Distortion",
                 "Pedal de distorsión compacto más vendido de la historia",
                 80.00, "Pedales", "boss_ds1.jpg", 25);
-        when(service.guardar(any())).thenReturn(response);
+        when(service.save(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/products").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Boss DS-1 Distortion"))
+                .andExpect(jsonPath("$.name").value("Boss DS-1 Distortion"))
                 .andExpect(jsonPath("$.stock").value(25));
     }
 
     @Test
-    void POST_crear_retorna400SiNombreDeInstrumentoEsBlanco() throws Exception {
+    void POST_create_retorna400SiNombreDeInstrumentoEsBlanco() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
-        request.setNombre("");
-        request.setPrecio(500.00);
+        request.setName("");
+        request.setPrice(500.00);
         request.setStock(3);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -192,10 +191,10 @@ class ProductControllerTest {
     }
 
     @Test
-    void POST_crear_retorna400SiPrecioEsCero() throws Exception {
+    void POST_create_retorna400SiPrecioEsCero() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
-        request.setNombre("Gibson Les Paul Standard");
-        request.setPrecio(0.0);
+        request.setName("Gibson Les Paul Standard");
+        request.setPrice(0.0);
         request.setStock(1);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -205,10 +204,10 @@ class ProductControllerTest {
     }
 
     @Test
-    void POST_crear_retorna400SiPrecioEsNegativo() throws Exception {
+    void POST_create_retorna400SiPrecioEsNegativo() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
-        request.setNombre("Pedal genérico");
-        request.setPrecio(-50.0);
+        request.setName("Pedal genérico");
+        request.setPrice(-50.0);
         request.setStock(5);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -218,10 +217,10 @@ class ProductControllerTest {
     }
 
     @Test
-    void POST_crear_retorna400SiStockEsNegativo() throws Exception {
+    void POST_create_retorna400SiStockEsNegativo() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
-        request.setNombre("Fender Telecaster");
-        request.setPrecio(1100.00);
+        request.setName("Fender Telecaster");
+        request.setPrice(1100.00);
         request.setStock(-1);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -235,26 +234,26 @@ class ProductControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void PUT_actualizar_retorna200AlActualizarGuitarra() throws Exception {
+    void PUT_update_retorna200AlActualizarGuitarra() throws Exception {
         ProductRequestDTO request = stratocasterRequest();
-        request.setPrecio(1650.00);
+        request.setPrice(1650.00);
 
         ProductResponseDTO response = new ProductResponseDTO(1,
                 "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica con pastillas V-Mod II",
                 1650.00, "Guitarras", "fender_strat.jpg", 8);
-        when(service.actualizar(eq(1), any())).thenReturn(response);
+        when(service.update(eq(1), any())).thenReturn(response);
 
         mockMvc.perform(put("/api/products/1").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.precio").value(1650.00));
+                .andExpect(jsonPath("$.price").value(1650.00));
     }
 
     @Test
-    void PUT_actualizar_retorna404SiInstrumentoNoExiste() throws Exception {
-        when(service.actualizar(eq(99), any())).thenThrow(new ProductNotFoundException(99));
+    void PUT_update_retorna404SiInstrumentoNoExiste() throws Exception {
+        when(service.update(eq(99), any())).thenThrow(new ProductNotFoundException(99));
 
         mockMvc.perform(put("/api/products/99").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -267,112 +266,112 @@ class ProductControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void DELETE_eliminar_retorna200AlEliminarPedal() throws Exception {
-        doNothing().when(service).eliminar(2);
+    void DELETE_delete_retorna200AlEliminarPedal() throws Exception {
+        doNothing().when(service).delete(2);
 
         mockMvc.perform(delete("/api/products/2").with(csrf()))
                 .andExpect(status().isOk());
 
-        verify(service).eliminar(2);
+        verify(service).delete(2);
     }
 
     @Test
-    void DELETE_eliminar_retorna404SiAmplificadorNoExiste() throws Exception {
-        doThrow(new ProductNotFoundException(99)).when(service).eliminar(99);
+    void DELETE_delete_retorna404SiAmplificadorNoExiste() throws Exception {
+        doThrow(new ProductNotFoundException(99)).when(service).delete(99);
 
         mockMvc.perform(delete("/api/products/99").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products/buscar
+    // GET /api/products/search
     // -------------------------------------------------------------------------
 
     @Test
-    void GET_buscar_retornaGuitarraPorNombre() throws Exception {
-        when(service.buscarPorNombre("Fender Stratocaster American Pro II"))
+    void GET_findByName_retornaGuitarraPorNombre() throws Exception {
+        when(service.findByName("Fender Stratocaster American Pro II"))
                 .thenReturn(stratocasterResponse());
 
-        mockMvc.perform(get("/api/products/buscar")
-                .param("nombre", "Fender Stratocaster American Pro II"))
+        mockMvc.perform(get("/api/products/search")
+                .param("name", "Fender Stratocaster American Pro II"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre").value("Fender Stratocaster American Pro II"));
+                .andExpect(jsonPath("$.name").value("Fender Stratocaster American Pro II"));
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products/categoria/{categoria}
+    // GET /api/products/category/{category}
     // -------------------------------------------------------------------------
 
     @Test
-    void GET_categoria_retornaAmplificadoresValvulares() throws Exception {
+    void GET_filterByCategory_retornaAmplificadoresValvulares() throws Exception {
         ProductResponseDTO voxResponse = new ProductResponseDTO(4, "Vox AC30",
                 "Amplificador valvular 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
 
-        when(service.filtrarPorCategoria(eq("Amplificadores"), any(Pageable.class)))
+        when(service.filterByCategory(eq("Amplificadores"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(marshallResponse(), voxResponse)));
 
-        mockMvc.perform(get("/api/products/categoria/Amplificadores"))
+        mockMvc.perform(get("/api/products/category/Amplificadores"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].categoria").value("Amplificadores"))
-                .andExpect(jsonPath("$.content[1].nombre").value("Vox AC30"));
+                .andExpect(jsonPath("$.content[0].category").value("Amplificadores"))
+                .andExpect(jsonPath("$.content[1].name").value("Vox AC30"));
     }
 
     @Test
-    void GET_categoria_retornaPedalesDeEfecto() throws Exception {
+    void GET_filterByCategory_retornaPedalesDeEfecto() throws Exception {
         ProductResponseDTO hallOfFameResponse = new ProductResponseDTO(7,
                 "TC Electronic Hall of Fame 2",
                 "Pedal de reverb con TonePrint",
                 150.00, "Pedales", "hof2.jpg", 12);
 
-        when(service.filtrarPorCategoria(eq("Pedales"), any(Pageable.class)))
+        when(service.filterByCategory(eq("Pedales"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(tubeScreamerResponse(), hallOfFameResponse)));
 
-        mockMvc.perform(get("/api/products/categoria/Pedales"))
+        mockMvc.perform(get("/api/products/category/Pedales"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].nombre").value("Ibanez Tube Screamer TS9"))
-                .andExpect(jsonPath("$.content[1].nombre").value("TC Electronic Hall of Fame 2"));
+                .andExpect(jsonPath("$.content[0].name").value("Ibanez Tube Screamer TS9"))
+                .andExpect(jsonPath("$.content[1].name").value("TC Electronic Hall of Fame 2"));
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products/stock-minimo
+    // GET /api/products/low-stock
     // -------------------------------------------------------------------------
 
     @Test
-    void GET_stockMinimo_usaDefault5YRetornaAmplificadoresConBajoStock() throws Exception {
-        when(service.stockMinimo(eq(5), any(Pageable.class)))
+    void GET_findLowStock_usaDefault5YRetornaAmplificadoresConBajoStock() throws Exception {
+        when(service.findLowStock(eq(5), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(marshallResponse())));
 
-        mockMvc.perform(get("/api/products/stock-minimo"))
+        mockMvc.perform(get("/api/products/low-stock"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].nombre").value("Marshall DSL40CR"))
+                .andExpect(jsonPath("$.content[0].name").value("Marshall DSL40CR"))
                 .andExpect(jsonPath("$.content[0].stock").value(3));
 
-        verify(service).stockMinimo(eq(5), any(Pageable.class));
+        verify(service).findLowStock(eq(5), any(Pageable.class));
     }
 
     @Test
-    void GET_stockMinimo_usaParametroPersonalizadoParaInstrumentosEscasos() throws Exception {
+    void GET_findLowStock_usaParametroPersonalizadoParaInstrumentosEscasos() throws Exception {
         ProductResponseDTO voxResponse = new ProductResponseDTO(4, "Vox AC30",
                 "Amplificador valvular 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
 
-        when(service.stockMinimo(eq(2), any(Pageable.class)))
+        when(service.findLowStock(eq(2), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(voxResponse)));
 
-        mockMvc.perform(get("/api/products/stock-minimo").param("min", "2"))
+        mockMvc.perform(get("/api/products/low-stock").param("min", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].nombre").value("Vox AC30"));
+                .andExpect(jsonPath("$.content[0].name").value("Vox AC30"));
 
-        verify(service).stockMinimo(eq(2), any(Pageable.class));
+        verify(service).findLowStock(eq(2), any(Pageable.class));
     }
 
     @Test
-    void GET_stockMinimo_retornaListaVaciaSiTodosLosInstrumentosTienenStock() throws Exception {
-        when(service.stockMinimo(eq(5), any(Pageable.class))).thenReturn(Page.empty());
+    void GET_findLowStock_retornaListaVaciaSiTodosLosInstrumentosTienenStock() throws Exception {
+        when(service.findLowStock(eq(5), any(Pageable.class))).thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/products/stock-minimo"))
+        mockMvc.perform(get("/api/products/low-stock"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
     }

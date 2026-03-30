@@ -22,10 +22,12 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private Integer usuarioId;
+    @Column(name = "usuario_id")
+    private Integer userId;
 
     @Enumerated(EnumType.STRING)
-    private OrderStatus estado;
+    @Column(name = "estado")
+    private OrderStatus status;
 
     private Double total;
 

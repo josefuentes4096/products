@@ -9,16 +9,16 @@ import lombok.Data;
 public class ProductRequestDTO {
 
     @NotBlank(message = "El nombre es obligatorio")
-    private String nombre;
+    private String name;
 
-    private String descripcion;
+    private String description;
 
     @Positive(message = "El precio debe ser mayor a 0")
-    private Double precio;
+    private Double price;
 
-    private String categoria;
+    private String category;
 
-    private String imagenUrl;
+    private String imageUrl;
 
     @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stock;

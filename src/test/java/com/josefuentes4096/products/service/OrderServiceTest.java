@@ -59,19 +59,19 @@ class OrderServiceTest {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private OrderRequestDTO buildRequest(int usuarioId, int productoId, int cantidad) {
+    private OrderRequestDTO buildRequest(int userId, int productId, int quantity) {
         OrderItemRequestDTO item = new OrderItemRequestDTO();
-        item.setProductoId(productoId);
-        item.setCantidad(cantidad);
+        item.setProductId(productId);
+        item.setQuantity(quantity);
 
         OrderRequestDTO request = new OrderRequestDTO();
-        request.setUsuarioId(usuarioId);
+        request.setUserId(userId);
         request.setItems(List.of(item));
         return request;
     }
 
-    private Order savedOrder(int id, int usuarioId, double total) {
-        return new Order(id, usuarioId, OrderStatus.PENDIENTE, total, List.of(), null, null);
+    private Order savedOrder(int id, int userId, double total) {
+        return new Order(id, userId, OrderStatus.PENDING, total, List.of(), null, null);
     }
 
     // -------------------------------------------------------------------------
@@ -79,37 +79,37 @@ class OrderServiceTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void crearPedido_compraDosGuitarrasCalculaTotalCorrecto() {
+    void createOrder_compraDosGuitarrasCalculaTotalCorrecto() {
         // 2 Stratocasters x $1500 = $3000
         when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
         when(orderRepository.save(any())).thenReturn(savedOrder(10, 7, 3000.00));
 
-        OrderResponseDTO resultado = service.crearPedido(buildRequest(7, 1, 2));
+        OrderResponseDTO resultado = service.createOrder(buildRequest(7, 1, 2));
 
         assertThat(resultado.getTotal()).isEqualTo(3000.00);
-        assertThat(resultado.getEstado()).isEqualTo(OrderStatus.PENDIENTE);
-        assertThat(resultado.getUsuarioId()).isEqualTo(7);
+        assertThat(resultado.getStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(resultado.getUserId()).isEqualTo(7);
     }
 
     @Test
-    void crearPedido_compraTresPedalesCalculaTotalCorrecto() {
+    void createOrder_compraTresPedalesCalculaTotalCorrecto() {
         // 3 Boss DS-1 x $80 = $240
         when(productRepository.findById(2)).thenReturn(Optional.of(bossDS1));
         when(orderRepository.save(any())).thenReturn(savedOrder(11, 3, 240.00));
 
-        OrderResponseDTO resultado = service.crearPedido(buildRequest(3, 2, 3));
+        OrderResponseDTO resultado = service.createOrder(buildRequest(3, 2, 3));
 
         assertThat(resultado.getTotal()).isEqualTo(240.00);
     }
 
     @Test
-    void crearPedido_estadoInicialSiempreEsPendiente() {
+    void createOrder_estadoInicialSiempreEsPending() {
         when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
         when(orderRepository.save(any())).thenReturn(savedOrder(12, 5, 1200.00));
 
-        OrderResponseDTO resultado = service.crearPedido(buildRequest(5, 3, 1));
+        OrderResponseDTO resultado = service.createOrder(buildRequest(5, 3, 1));
 
-        assertThat(resultado.getEstado()).isEqualTo(OrderStatus.PENDIENTE);
+        assertThat(resultado.getStatus()).isEqualTo(OrderStatus.PENDING);
     }
 
     // -------------------------------------------------------------------------
@@ -117,34 +117,34 @@ class OrderServiceTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void crearPedido_decrementaStockDeGuitarraAlComprar() {
+    void createOrder_decrementaStockDeGuitarraAlComprar() {
         // stock inicial: 5, compra: 2, stock final esperado: 3
         when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
         when(orderRepository.save(any())).thenReturn(savedOrder(13, 1, 3000.00));
 
-        service.crearPedido(buildRequest(1, 1, 2));
+        service.createOrder(buildRequest(1, 1, 2));
 
         assertThat(stratocaster.getStock()).isEqualTo(3);
     }
 
     @Test
-    void crearPedido_decrementaStockDeAmplificadorAlComprar() {
+    void createOrder_decrementaStockDeAmplificadorAlComprar() {
         // Marshall: stock 2, compra 1, stock final: 1
         when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
         when(orderRepository.save(any())).thenReturn(savedOrder(14, 1, 1200.00));
 
-        service.crearPedido(buildRequest(1, 3, 1));
+        service.createOrder(buildRequest(1, 3, 1));
 
         assertThat(marshallDsl40.getStock()).isEqualTo(1);
     }
 
     @Test
-    void crearPedido_agotaStockCuandoSeCompraExactamenteLoCantidadDisponible() {
+    void createOrder_agotaStockCuandoSeCompraExactamenteLaCantidadDisponible() {
         // Vox AC30: solo hay 1 en stock, se compra 1
         when(productRepository.findById(4)).thenReturn(Optional.of(voxAC30));
         when(orderRepository.save(any())).thenReturn(savedOrder(15, 2, 2200.00));
 
-        service.crearPedido(buildRequest(2, 4, 1));
+        service.createOrder(buildRequest(2, 4, 1));
 
         assertThat(voxAC30.getStock()).isEqualTo(0);
     }
@@ -154,11 +154,11 @@ class OrderServiceTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void crearPedido_lanzaExcepcionSiSeIntentanComprarMasGuitarrasQueElStock() {
+    void createOrder_lanzaExcepcionSiSeIntentanComprarMasGuitarrasQueElStock() {
         // Stratocaster: stock 5, intento comprar 6
         when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
 
-        assertThatThrownBy(() -> service.crearPedido(buildRequest(1, 1, 6)))
+        assertThatThrownBy(() -> service.createOrder(buildRequest(1, 1, 6)))
                 .isInstanceOf(InsufficientStockException.class)
                 .hasMessageContaining("Fender Stratocaster American Pro II");
 
@@ -166,11 +166,11 @@ class OrderServiceTest {
     }
 
     @Test
-    void crearPedido_lanzaExcepcionSiAmplificadorEstaAgotado() {
+    void createOrder_lanzaExcepcionSiAmplificadorEstaAgotado() {
         // Vox AC30: stock 1, se intenta comprar 2
         when(productRepository.findById(4)).thenReturn(Optional.of(voxAC30));
 
-        assertThatThrownBy(() -> service.crearPedido(buildRequest(1, 4, 2)))
+        assertThatThrownBy(() -> service.createOrder(buildRequest(1, 4, 2)))
                 .isInstanceOf(InsufficientStockException.class)
                 .hasMessageContaining("Vox AC30");
 
@@ -178,11 +178,11 @@ class OrderServiceTest {
     }
 
     @Test
-    void crearPedido_lanzaExcepcionSiStockEsCero() {
+    void createOrder_lanzaExcepcionSiStockEsCero() {
         marshallDsl40.setStock(0);
         when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
 
-        assertThatThrownBy(() -> service.crearPedido(buildRequest(1, 3, 1)))
+        assertThatThrownBy(() -> service.createOrder(buildRequest(1, 3, 1)))
                 .isInstanceOf(InsufficientStockException.class);
 
         verify(orderRepository, never()).save(any());
@@ -193,19 +193,19 @@ class OrderServiceTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void crearPedido_lanzaExcepcionSiGuitarraNoExisteEnCatalogo() {
+    void createOrder_lanzaExcepcionSiGuitarraNoExisteEnCatalogo() {
         when(productRepository.findById(99)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.crearPedido(buildRequest(1, 99, 1)))
+        assertThatThrownBy(() -> service.createOrder(buildRequest(1, 99, 1)))
                 .isInstanceOf(ProductNotFoundException.class)
                 .hasMessageContaining("99");
     }
 
     @Test
-    void crearPedido_noGuardaPedidoSiElProductoNoExiste() {
+    void createOrder_noGuardaPedidoSiElProductoNoExiste() {
         when(productRepository.findById(99)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.crearPedido(buildRequest(1, 99, 1)))
+        assertThatThrownBy(() -> service.createOrder(buildRequest(1, 99, 1)))
                 .isInstanceOf(ProductNotFoundException.class);
 
         verify(orderRepository, never()).save(any());
@@ -216,79 +216,79 @@ class OrderServiceTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void crearPedido_pedidoConGuitarraYPedalSumaTotalCorrectamente() {
+    void createOrder_pedidoConGuitarraYPedalSumaTotalCorrectamente() {
         // 1 Stratocaster ($1500) + 2 Boss DS-1 ($160) = $1660
         OrderItemRequestDTO itemGuitarra = new OrderItemRequestDTO();
-        itemGuitarra.setProductoId(1);
-        itemGuitarra.setCantidad(1);
+        itemGuitarra.setProductId(1);
+        itemGuitarra.setQuantity(1);
 
         OrderItemRequestDTO itemPedal = new OrderItemRequestDTO();
-        itemPedal.setProductoId(2);
-        itemPedal.setCantidad(2);
+        itemPedal.setProductId(2);
+        itemPedal.setQuantity(2);
 
         OrderRequestDTO request = new OrderRequestDTO();
-        request.setUsuarioId(10);
+        request.setUserId(10);
         request.setItems(List.of(itemGuitarra, itemPedal));
 
         when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
         when(productRepository.findById(2)).thenReturn(Optional.of(bossDS1));
         when(orderRepository.save(any())).thenReturn(savedOrder(20, 10, 1660.00));
 
-        OrderResponseDTO resultado = service.crearPedido(request);
+        OrderResponseDTO resultado = service.createOrder(request);
 
         assertThat(resultado.getTotal()).isEqualTo(1660.00);
-        assertThat(resultado.getUsuarioId()).isEqualTo(10);
+        assertThat(resultado.getUserId()).isEqualTo(10);
     }
 
     @Test
-    void crearPedido_pedidoConDosAmplificadoresDecorementaStockDeAmbos() {
+    void createOrder_pedidoConDosAmplificadoresDecrementaStockDeAmbos() {
         // 1 Marshall + 1 Vox AC30
         OrderItemRequestDTO itemMarshall = new OrderItemRequestDTO();
-        itemMarshall.setProductoId(3);
-        itemMarshall.setCantidad(1);
+        itemMarshall.setProductId(3);
+        itemMarshall.setQuantity(1);
 
         OrderItemRequestDTO itemVox = new OrderItemRequestDTO();
-        itemVox.setProductoId(4);
-        itemVox.setCantidad(1);
+        itemVox.setProductId(4);
+        itemVox.setQuantity(1);
 
         OrderRequestDTO request = new OrderRequestDTO();
-        request.setUsuarioId(5);
+        request.setUserId(5);
         request.setItems(List.of(itemMarshall, itemVox));
 
         when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
         when(productRepository.findById(4)).thenReturn(Optional.of(voxAC30));
         when(orderRepository.save(any())).thenReturn(savedOrder(21, 5, 3400.00));
 
-        service.crearPedido(request);
+        service.createOrder(request);
 
         assertThat(marshallDsl40.getStock()).isEqualTo(1); // 2 - 1
         assertThat(voxAC30.getStock()).isEqualTo(0);       // 1 - 1
     }
 
     @Test
-    void crearPedido_pedidoConVariosItemsCalculaSubtotalPorItem() {
+    void createOrder_pedidoConVariosItemsCalculaSubtotalPorItem() {
         // 1 Stratocaster ($1500) + 5 Boss DS-1 ($400) = $1900
         OrderItemRequestDTO itemGuitarra = new OrderItemRequestDTO();
-        itemGuitarra.setProductoId(1);
-        itemGuitarra.setCantidad(1);
+        itemGuitarra.setProductId(1);
+        itemGuitarra.setQuantity(1);
 
         OrderItemRequestDTO itemPedal = new OrderItemRequestDTO();
-        itemPedal.setProductoId(2);
-        itemPedal.setCantidad(5);
+        itemPedal.setProductId(2);
+        itemPedal.setQuantity(5);
 
         OrderRequestDTO request = new OrderRequestDTO();
-        request.setUsuarioId(8);
+        request.setUserId(8);
         request.setItems(List.of(itemGuitarra, itemPedal));
 
         when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
         when(productRepository.findById(2)).thenReturn(Optional.of(bossDS1));
 
-        Order saved = new Order(22, 8, OrderStatus.PENDIENTE, 1900.00, List.of(), null, null);
+        Order saved = new Order(22, 8, OrderStatus.PENDING, 1900.00, List.of(), null, null);
         when(orderRepository.save(any())).thenReturn(saved);
 
-        OrderResponseDTO resultado = service.crearPedido(request);
+        OrderResponseDTO resultado = service.createOrder(request);
 
-        assertThat(resultado.getPedidoId()).isEqualTo(22);
+        assertThat(resultado.getOrderId()).isEqualTo(22);
         assertThat(resultado.getTotal()).isEqualTo(1900.00);
     }
 }

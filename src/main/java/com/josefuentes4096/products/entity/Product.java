@@ -23,14 +23,21 @@ public class Product {
     private Integer id;
 
     @NotBlank(message = "El nombre es obligatorio")
-    private String nombre;
+    @Column(name = "nombre")
+    private String name;
 
-    private String descripcion;
+    @Column(name = "descripcion")
+    private String description;
 
     @Positive(message = "El precio debe ser mayor a 0")
-    private Double precio;
-    private String categoria;
-    private String imagenUrl;
+    @Column(name = "precio")
+    private Double price;
+
+    @Column(name = "categoria")
+    private String category;
+
+    @Column(name = "imagen_url")
+    private String imageUrl;
 
     @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stock;

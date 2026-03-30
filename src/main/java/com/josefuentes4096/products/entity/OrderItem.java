@@ -22,7 +22,8 @@ public class OrderItem {
     @ManyToOne
     private Product product;
 
-    private Integer cantidad;
+    @Column(name = "cantidad")
+    private Integer quantity;
 
     private Double subtotal;
 }

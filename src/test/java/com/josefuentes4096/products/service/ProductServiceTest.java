@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -53,19 +52,19 @@ class ProductServiceTest {
     }
 
     // -------------------------------------------------------------------------
-    // listar
+    // findAll
     // -------------------------------------------------------------------------
 
     @Test
-    void listar_retornaTodosLosInstrumentos() {
+    void findAll_retornaTodosLosInstrumentos() {
         Pageable pageable = PageRequest.of(0, 10);
         when(repository.findAll(pageable))
                 .thenReturn(new PageImpl<>(List.of(stratocaster, tubeScreamer, marshallDsl40)));
 
-        Page<ProductResponseDTO> resultado = service.listar(pageable);
+        Page<ProductResponseDTO> resultado = service.findAll(pageable);
 
         assertThat(resultado.getContent()).hasSize(3);
-        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getNombre)
+        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getName)
                 .containsExactly(
                         "Fender Stratocaster American Pro II",
                         "Ibanez Tube Screamer TS9",
@@ -73,60 +72,60 @@ class ProductServiceTest {
     }
 
     @Test
-    void listar_retornaListaVaciaSiNoHayProductos() {
+    void findAll_retornaListaVaciaSiNoHayProductos() {
         Pageable pageable = PageRequest.of(0, 10);
         when(repository.findAll(pageable)).thenReturn(Page.empty());
 
-        assertThat(service.listar(pageable).getContent()).isEmpty();
+        assertThat(service.findAll(pageable).getContent()).isEmpty();
     }
 
     // -------------------------------------------------------------------------
-    // obtenerPorId
+    // findById
     // -------------------------------------------------------------------------
 
     @Test
-    void obtenerPorId_retornaGuitarraCuandoExiste() {
+    void findById_retornaGuitarraCuandoExiste() {
         when(repository.findById(1)).thenReturn(Optional.of(stratocaster));
 
-        ProductResponseDTO resultado = service.obtenerPorId(1);
+        ProductResponseDTO resultado = service.findById(1);
 
         assertThat(resultado.getId()).isEqualTo(1);
-        assertThat(resultado.getNombre()).isEqualTo("Fender Stratocaster American Pro II");
-        assertThat(resultado.getPrecio()).isEqualTo(1500.00);
-        assertThat(resultado.getCategoria()).isEqualTo("Guitarras");
+        assertThat(resultado.getName()).isEqualTo("Fender Stratocaster American Pro II");
+        assertThat(resultado.getPrice()).isEqualTo(1500.00);
+        assertThat(resultado.getCategory()).isEqualTo("Guitarras");
     }
 
     @Test
-    void obtenerPorId_retornaPedalCuandoExiste() {
+    void findById_retornaPedalCuandoExiste() {
         when(repository.findById(2)).thenReturn(Optional.of(tubeScreamer));
 
-        ProductResponseDTO resultado = service.obtenerPorId(2);
+        ProductResponseDTO resultado = service.findById(2);
 
-        assertThat(resultado.getNombre()).isEqualTo("Ibanez Tube Screamer TS9");
-        assertThat(resultado.getCategoria()).isEqualTo("Pedales");
+        assertThat(resultado.getName()).isEqualTo("Ibanez Tube Screamer TS9");
+        assertThat(resultado.getCategory()).isEqualTo("Pedales");
     }
 
     @Test
-    void obtenerPorId_lanzaExcepcionCuandoInstrumentoNoExiste() {
+    void findById_lanzaExcepcionCuandoInstrumentoNoExiste() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.obtenerPorId(99))
+        assertThatThrownBy(() -> service.findById(99))
                 .isInstanceOf(ProductNotFoundException.class)
                 .hasMessageContaining("99");
     }
 
     // -------------------------------------------------------------------------
-    // guardar
+    // save
     // -------------------------------------------------------------------------
 
     @Test
-    void guardar_creaAmplificadorValvularCorrectamente() {
+    void save_creaAmplificadorValvularCorrectamente() {
         ProductRequestDTO dto = new ProductRequestDTO();
-        dto.setNombre("Vox AC30");
-        dto.setDescripcion("Amplificador valvular de 30W, icono del sonido británico");
-        dto.setPrecio(2200.00);
-        dto.setCategoria("Amplificadores");
-        dto.setImagenUrl("vox_ac30.jpg");
+        dto.setName("Vox AC30");
+        dto.setDescription("Amplificador valvular de 30W, icono del sonido británico");
+        dto.setPrice(2200.00);
+        dto.setCategory("Amplificadores");
+        dto.setImageUrl("vox_ac30.jpg");
         dto.setStock(2);
 
         Product guardado = new Product(4, "Vox AC30",
@@ -134,22 +133,22 @@ class ProductServiceTest {
                 2200.00, "Amplificadores", "vox_ac30.jpg", 2, null, null);
         when(repository.save(any())).thenReturn(guardado);
 
-        ProductResponseDTO resultado = service.guardar(dto);
+        ProductResponseDTO resultado = service.save(dto);
 
-        assertThat(resultado.getNombre()).isEqualTo("Vox AC30");
-        assertThat(resultado.getPrecio()).isEqualTo(2200.00);
+        assertThat(resultado.getName()).isEqualTo("Vox AC30");
+        assertThat(resultado.getPrice()).isEqualTo(2200.00);
         assertThat(resultado.getStock()).isEqualTo(2);
         verify(repository).save(any(Product.class));
     }
 
     @Test
-    void guardar_creaPedalDeEfectoCorrectamente() {
+    void save_creaPedalDeEfectoCorrectamente() {
         ProductRequestDTO dto = new ProductRequestDTO();
-        dto.setNombre("Boss DS-1 Distortion");
-        dto.setDescripcion("Pedal de distorsión compacto, el más vendido en la historia");
-        dto.setPrecio(80.00);
-        dto.setCategoria("Pedales");
-        dto.setImagenUrl("boss_ds1.jpg");
+        dto.setName("Boss DS-1 Distortion");
+        dto.setDescription("Pedal de distorsión compacto, el más vendido en la historia");
+        dto.setPrice(80.00);
+        dto.setCategory("Pedales");
+        dto.setImageUrl("boss_ds1.jpg");
         dto.setStock(20);
 
         Product guardado = new Product(5, "Boss DS-1 Distortion",
@@ -157,161 +156,161 @@ class ProductServiceTest {
                 80.00, "Pedales", "boss_ds1.jpg", 20, null, null);
         when(repository.save(any())).thenReturn(guardado);
 
-        ProductResponseDTO resultado = service.guardar(dto);
+        ProductResponseDTO resultado = service.save(dto);
 
-        assertThat(resultado.getNombre()).isEqualTo("Boss DS-1 Distortion");
-        assertThat(resultado.getCategoria()).isEqualTo("Pedales");
+        assertThat(resultado.getName()).isEqualTo("Boss DS-1 Distortion");
+        assertThat(resultado.getCategory()).isEqualTo("Pedales");
         verify(repository).save(any(Product.class));
     }
 
     // -------------------------------------------------------------------------
-    // actualizar
+    // update
     // -------------------------------------------------------------------------
 
     @Test
-    void actualizar_modificaPrecioYStockDeGuitarra() {
+    void update_modificaPrecioYStockDeGuitarra() {
         ProductRequestDTO dto = new ProductRequestDTO();
-        dto.setNombre("Fender Stratocaster American Pro II");
-        dto.setDescripcion("Guitarra eléctrica de cuerpo sólido con pastillas V-Mod II");
-        dto.setPrecio(1650.00);
-        dto.setCategoria("Guitarras");
-        dto.setImagenUrl("fender_strat_v2.jpg");
+        dto.setName("Fender Stratocaster American Pro II");
+        dto.setDescription("Guitarra eléctrica de cuerpo sólido con pastillas V-Mod II");
+        dto.setPrice(1650.00);
+        dto.setCategory("Guitarras");
+        dto.setImageUrl("fender_strat_v2.jpg");
         dto.setStock(5);
 
         when(repository.findById(1)).thenReturn(Optional.of(stratocaster));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProductResponseDTO resultado = service.actualizar(1, dto);
+        ProductResponseDTO resultado = service.update(1, dto);
 
-        assertThat(resultado.getPrecio()).isEqualTo(1650.00);
+        assertThat(resultado.getPrice()).isEqualTo(1650.00);
         assertThat(resultado.getStock()).isEqualTo(5);
-        assertThat(resultado.getImagenUrl()).isEqualTo("fender_strat_v2.jpg");
+        assertThat(resultado.getImageUrl()).isEqualTo("fender_strat_v2.jpg");
     }
 
     @Test
-    void actualizar_cambiaDescripcionDeAmplificador() {
+    void update_cambiaDescripcionDeAmplificador() {
         ProductRequestDTO dto = new ProductRequestDTO();
-        dto.setNombre("Marshall DSL40CR");
-        dto.setDescripcion("Amplificador valvular 40W - edición 2024 con nueva reverb digital");
-        dto.setPrecio(1250.00);
-        dto.setCategoria("Amplificadores");
-        dto.setImagenUrl("marshall_dsl40_2024.jpg");
+        dto.setName("Marshall DSL40CR");
+        dto.setDescription("Amplificador valvular 40W - edición 2024 con nueva reverb digital");
+        dto.setPrice(1250.00);
+        dto.setCategory("Amplificadores");
+        dto.setImageUrl("marshall_dsl40_2024.jpg");
         dto.setStock(3);
 
         when(repository.findById(3)).thenReturn(Optional.of(marshallDsl40));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ProductResponseDTO resultado = service.actualizar(3, dto);
+        ProductResponseDTO resultado = service.update(3, dto);
 
-        assertThat(resultado.getDescripcion()).contains("2024");
-        assertThat(resultado.getPrecio()).isEqualTo(1250.00);
+        assertThat(resultado.getDescription()).contains("2024");
+        assertThat(resultado.getPrice()).isEqualTo(1250.00);
     }
 
     @Test
-    void actualizar_lanzaExcepcionSiInstrumentoNoExiste() {
+    void update_lanzaExcepcionSiInstrumentoNoExiste() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.actualizar(99, new ProductRequestDTO()))
+        assertThatThrownBy(() -> service.update(99, new ProductRequestDTO()))
                 .isInstanceOf(ProductNotFoundException.class);
     }
 
     // -------------------------------------------------------------------------
-    // eliminar
+    // delete
     // -------------------------------------------------------------------------
 
     @Test
-    void eliminar_eliminaPedalExistente() {
+    void delete_eliminaPedalExistente() {
         when(repository.findById(2)).thenReturn(Optional.of(tubeScreamer));
 
-        service.eliminar(2);
+        service.delete(2);
 
         verify(repository).delete(tubeScreamer);
     }
 
     @Test
-    void eliminar_lanzaExcepcionSiInstrumentoNoExiste() {
+    void delete_lanzaExcepcionSiInstrumentoNoExiste() {
         when(repository.findById(99)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.eliminar(99))
+        assertThatThrownBy(() -> service.delete(99))
                 .isInstanceOf(ProductNotFoundException.class);
         verify(repository, never()).delete(any());
     }
 
     // -------------------------------------------------------------------------
-    // buscarPorNombre
+    // findByName
     // -------------------------------------------------------------------------
 
     @Test
-    void buscarPorNombre_encuentraAmplificadorPorNombreExacto() {
-        when(repository.findByNombre("Marshall DSL40CR")).thenReturn(Optional.of(marshallDsl40));
+    void findByName_encuentraAmplificadorPorNombreExacto() {
+        when(repository.findByName("Marshall DSL40CR")).thenReturn(Optional.of(marshallDsl40));
 
-        ProductResponseDTO resultado = service.buscarPorNombre("Marshall DSL40CR");
+        ProductResponseDTO resultado = service.findByName("Marshall DSL40CR");
 
-        assertThat(resultado.getNombre()).isEqualTo("Marshall DSL40CR");
-        assertThat(resultado.getCategoria()).isEqualTo("Amplificadores");
+        assertThat(resultado.getName()).isEqualTo("Marshall DSL40CR");
+        assertThat(resultado.getCategory()).isEqualTo("Amplificadores");
     }
 
     @Test
-    void buscarPorNombre_lanzaExcepcionSiNombreNoExiste() {
-        when(repository.findByNombre("Gibson Les Paul Custom")).thenReturn(Optional.empty());
+    void findByName_lanzaExcepcionSiNombreNoExiste() {
+        when(repository.findByName("Gibson Les Paul Custom")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.buscarPorNombre("Gibson Les Paul Custom"))
+        assertThatThrownBy(() -> service.findByName("Gibson Les Paul Custom"))
                 .isInstanceOf(ProductNotFoundException.class)
                 .hasMessageContaining("Gibson Les Paul Custom");
     }
 
     // -------------------------------------------------------------------------
-    // filtrarPorCategoria
+    // filterByCategory
     // -------------------------------------------------------------------------
 
     @Test
-    void filtrarPorCategoria_retornaGuitarrasDeLaCategoria() {
+    void filterByCategory_retornaGuitarrasDeLaCategoria() {
         Pageable pageable = PageRequest.of(0, 10);
         Product lesPaul = new Product(6, "Gibson Les Paul Standard",
                 "Guitarra eléctrica con cuerpo de caoba y tapa de arce flameado",
                 2800.00, "Guitarras", "gibson_lp.jpg", 2, null, null);
 
-        when(repository.findByCategoriaIgnoreCase("guitarras", pageable))
+        when(repository.findByCategoryIgnoreCase("guitarras", pageable))
                 .thenReturn(new PageImpl<>(List.of(stratocaster, lesPaul)));
 
-        Page<ProductResponseDTO> resultado = service.filtrarPorCategoria("guitarras", pageable);
+        Page<ProductResponseDTO> resultado = service.filterByCategory("guitarras", pageable);
 
         assertThat(resultado.getContent()).hasSize(2);
-        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getCategoria)
+        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getCategory)
                 .containsOnly("Guitarras");
     }
 
     @Test
-    void filtrarPorCategoria_retornaPedalesIgnorandoMayusculas() {
+    void filterByCategory_retornaPedalesIgnorandoMayusculas() {
         Pageable pageable = PageRequest.of(0, 10);
         Product hallOfFame = new Product(7, "TC Electronic Hall of Fame 2",
                 "Pedal de reverb con TonePrint y algoritmos de sala",
                 150.00, "Pedales", "hof2.jpg", 12, null, null);
 
-        when(repository.findByCategoriaIgnoreCase("PEDALES", pageable))
+        when(repository.findByCategoryIgnoreCase("PEDALES", pageable))
                 .thenReturn(new PageImpl<>(List.of(tubeScreamer, hallOfFame)));
 
-        Page<ProductResponseDTO> resultado = service.filtrarPorCategoria("PEDALES", pageable);
+        Page<ProductResponseDTO> resultado = service.filterByCategory("PEDALES", pageable);
 
         assertThat(resultado.getContent()).hasSize(2);
-        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getNombre)
+        assertThat(resultado.getContent()).extracting(ProductResponseDTO::getName)
                 .contains("Ibanez Tube Screamer TS9", "TC Electronic Hall of Fame 2");
     }
 
     @Test
-    void filtrarPorCategoria_retornaListaVaciaSiNoHayProductosEnCategoria() {
+    void filterByCategory_retornaListaVaciaSiNoHayProductosEnCategoria() {
         Pageable pageable = PageRequest.of(0, 10);
-        when(repository.findByCategoriaIgnoreCase("Baterías", pageable)).thenReturn(Page.empty());
+        when(repository.findByCategoryIgnoreCase("Baterías", pageable)).thenReturn(Page.empty());
 
-        assertThat(service.filtrarPorCategoria("Baterías", pageable).getContent()).isEmpty();
+        assertThat(service.filterByCategory("Baterías", pageable).getContent()).isEmpty();
     }
 
     // -------------------------------------------------------------------------
-    // stockMinimo
+    // findLowStock
     // -------------------------------------------------------------------------
 
     @Test
-    void stockMinimo_retornaAmplificadoresConStockBajo() {
+    void findLowStock_retornaAmplificadoresConStockBajo() {
         Pageable pageable = PageRequest.of(0, 10);
         Product voxAC30 = new Product(4, "Vox AC30",
                 "Amplificador valvular de 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1, null, null);
@@ -319,7 +318,7 @@ class ProductServiceTest {
         when(repository.findByStockLessThanEqual(5, pageable))
                 .thenReturn(new PageImpl<>(List.of(marshallDsl40, voxAC30)));
 
-        Page<ProductResponseDTO> resultado = service.stockMinimo(5, pageable);
+        Page<ProductResponseDTO> resultado = service.findLowStock(5, pageable);
 
         assertThat(resultado.getContent()).hasSize(2);
         assertThat(resultado.getContent()).extracting(ProductResponseDTO::getStock)
@@ -327,23 +326,23 @@ class ProductServiceTest {
     }
 
     @Test
-    void stockMinimo_retornaListaVaciaSiTodosLosProductosTienenStockSuficiente() {
+    void findLowStock_retornaListaVaciaSiTodosLosProductosTienenStockSuficiente() {
         Pageable pageable = PageRequest.of(0, 10);
         when(repository.findByStockLessThanEqual(0, pageable)).thenReturn(Page.empty());
 
-        assertThat(service.stockMinimo(0, pageable).getContent()).isEmpty();
+        assertThat(service.findLowStock(0, pageable).getContent()).isEmpty();
     }
 
     @Test
-    void stockMinimo_usaElValorMinimoPasadoComoParametro() {
+    void findLowStock_usaElValorMinimoPasadoComoParametro() {
         Pageable pageable = PageRequest.of(0, 10);
         when(repository.findByStockLessThanEqual(3, pageable))
                 .thenReturn(new PageImpl<>(List.of(marshallDsl40)));
 
-        Page<ProductResponseDTO> resultado = service.stockMinimo(3, pageable);
+        Page<ProductResponseDTO> resultado = service.findLowStock(3, pageable);
 
         assertThat(resultado.getContent()).hasSize(1);
-        assertThat(resultado.getContent().get(0).getNombre()).isEqualTo("Marshall DSL40CR");
+        assertThat(resultado.getContent().get(0).getName()).isEqualTo("Marshall DSL40CR");
         verify(repository).findByStockLessThanEqual(3, pageable);
     }
 }

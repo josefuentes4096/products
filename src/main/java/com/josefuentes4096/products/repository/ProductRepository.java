@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
 
-    Optional<Product> findByNombre(String nombre);
+    Optional<Product> findByName(String name);
 
-    Page<Product> findByCategoriaIgnoreCase(String categoria, Pageable pageable);
+    Page<Product> findByCategoryIgnoreCase(String category, Pageable pageable);
 
     Page<Product> findByStockLessThanEqual(Integer stock, Pageable pageable);
 }

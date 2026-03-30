@@ -24,42 +24,43 @@ public class OrderService {
     private final ProductRepository productRepository;
 
     @Transactional
-    public OrderResponseDTO crearPedido(OrderRequestDTO request) {
-        log.info("Creando pedido para usuario: {}", request.getUsuarioId());
+    public OrderResponseDTO createOrder(OrderRequestDTO request) {
+        log.info("Creando pedido para usuario: {}", request.getUserId());
 
-        List<OrderItem> entidades = new ArrayList<>();
+        List<OrderItem> entities = new ArrayList<>();
         List<OrderItemResponseDTO> responseItems = new ArrayList<>();
         double total = 0;
 
         for (OrderItemRequestDTO dto : request.getItems()) {
 
-            Product product = productRepository.findById(dto.getProductoId())
+            Product product = productRepository.findById(dto.getProductId())
                     .orElseThrow(() -> {
-                        log.warn("Producto no encontrado con id: {}", dto.getProductoId());
-                        return new ProductNotFoundException(dto.getProductoId());
+                        log.warn("Producto no encontrado con id: {}", dto.getProductId());
+                        return new ProductNotFoundException(dto.getProductId());
                     });
 
-            if (product.getStock() < dto.getCantidad()) {
-                log.warn("Stock insuficiente para '{}': stock={}, solicitado={}", product.getNombre(), product.getStock(), dto.getCantidad());
-                throw new InsufficientStockException(product.getNombre());
+            if (product.getStock() < dto.getQuantity()) {
+                log.warn("Stock insuficiente para '{}': stock={}, solicitado={}",
+                        product.getName(), product.getStock(), dto.getQuantity());
+                throw new InsufficientStockException(product.getName());
             }
 
-            product.setStock(product.getStock() - dto.getCantidad());
-            log.debug("Stock actualizado para '{}': nuevo stock={}", product.getNombre(), product.getStock());
+            product.setStock(product.getStock() - dto.getQuantity());
+            log.debug("Stock actualizado para '{}': nuevo stock={}", product.getName(), product.getStock());
 
-            double subtotal = product.getPrecio() * dto.getCantidad();
+            double subtotal = product.getPrice() * dto.getQuantity();
 
             OrderItem item = new OrderItem();
             item.setProduct(product);
-            item.setCantidad(dto.getCantidad());
+            item.setQuantity(dto.getQuantity());
             item.setSubtotal(subtotal);
 
-            entidades.add(item);
+            entities.add(item);
 
             responseItems.add(new OrderItemResponseDTO(
                     product.getId(),
-                    product.getNombre(),
-                    dto.getCantidad(),
+                    product.getName(),
+                    dto.getQuantity(),
                     subtotal
             ));
 
@@ -67,28 +68,28 @@ public class OrderService {
         }
 
         Order order = new Order();
-        order.setUsuarioId(request.getUsuarioId());
-        order.setEstado(OrderStatus.PENDIENTE);
+        order.setUserId(request.getUserId());
+        order.setStatus(OrderStatus.PENDING);
         order.setTotal(total);
-        order.setItems(entidades);
+        order.setItems(entities);
 
-        entidades.forEach(item -> item.setOrder(order));
+        entities.forEach(item -> item.setOrder(order));
 
         Order saved = orderRepository.save(order);
         log.info("Pedido creado con id: {}, total: {}", saved.getId(), saved.getTotal());
 
         return new OrderResponseDTO(
                 saved.getId(),
-                saved.getUsuarioId(),
-                saved.getEstado(),
+                saved.getUserId(),
+                saved.getStatus(),
                 saved.getTotal(),
                 responseItems
         );
     }
 
-    public List<OrderResponseDTO> obtenerHistorial(Integer usuarioId) {
-        log.info("Consultando historial de pedidos para usuario: {}", usuarioId);
-        return orderRepository.findByUsuarioId(usuarioId)
+    public List<OrderResponseDTO> getOrderHistory(Integer userId) {
+        log.info("Consultando historial de pedidos para usuario: {}", userId);
+        return orderRepository.findByUserId(userId)
                 .stream()
                 .map(this::toDTO)
                 .toList();
@@ -98,15 +99,15 @@ public class OrderService {
         List<OrderItemResponseDTO> items = order.getItems().stream()
                 .map(item -> new OrderItemResponseDTO(
                         item.getProduct().getId(),
-                        item.getProduct().getNombre(),
-                        item.getCantidad(),
+                        item.getProduct().getName(),
+                        item.getQuantity(),
                         item.getSubtotal()
                 ))
                 .toList();
         return new OrderResponseDTO(
                 order.getId(),
-                order.getUsuarioId(),
-                order.getEstado(),
+                order.getUserId(),
+                order.getStatus(),
                 order.getTotal(),
                 items
         );

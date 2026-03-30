@@ -17,12 +17,12 @@ public class OrderController {
     private final OrderService service;
 
     @PostMapping
-    public OrderResponseDTO crear(@RequestBody @Valid OrderRequestDTO request) {
-        return service.crearPedido(request);
+    public OrderResponseDTO create(@RequestBody @Valid OrderRequestDTO request) {
+        return service.createOrder(request);
     }
 
-    @GetMapping("/usuario/{usuarioId}")
-    public List<OrderResponseDTO> historial(@PathVariable Integer usuarioId) {
-        return service.obtenerHistorial(usuarioId);
+    @GetMapping("/user/{userId}")
+    public List<OrderResponseDTO> getHistory(@PathVariable Integer userId) {
+        return service.getOrderHistory(userId);
     }
 }

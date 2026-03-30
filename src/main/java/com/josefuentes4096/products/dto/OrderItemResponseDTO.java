@@ -6,8 +6,8 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class OrderItemResponseDTO {
-    private Integer productoId;
-    private String nombre;
-    private Integer cantidad;
+    private Integer productId;
+    private String name;
+    private Integer quantity;
     private Double subtotal;
 }

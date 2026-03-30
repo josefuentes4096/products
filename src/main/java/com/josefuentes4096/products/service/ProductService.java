@@ -19,12 +19,12 @@ public class ProductService {
 
     private final ProductRepository repository;
 
-    public Page<ProductResponseDTO> listar(Pageable pageable) {
+    public Page<ProductResponseDTO> findAll(Pageable pageable) {
         log.info("Listando productos - página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
         return repository.findAll(pageable).map(this::toDTO);
     }
 
-    public ProductResponseDTO obtenerPorId(Integer id) {
+    public ProductResponseDTO findById(Integer id) {
         log.info("Buscando producto con id: {}", id);
         return toDTO(repository.findById(id)
                 .orElseThrow(() -> {
@@ -34,16 +34,16 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponseDTO guardar(ProductRequestDTO dto) {
-        log.info("Creando producto: {}", dto.getNombre());
+    public ProductResponseDTO save(ProductRequestDTO dto) {
+        log.info("Creando producto: {}", dto.getName());
         Product product = toEntity(dto);
-        ProductResponseDTO resultado = toDTO(repository.save(product));
-        log.info("Producto creado con id: {}", resultado.getId());
-        return resultado;
+        ProductResponseDTO result = toDTO(repository.save(product));
+        log.info("Producto creado con id: {}", result.getId());
+        return result;
     }
 
     @Transactional
-    public ProductResponseDTO actualizar(Integer id, ProductRequestDTO dto) {
+    public ProductResponseDTO update(Integer id, ProductRequestDTO dto) {
         log.info("Actualizando producto con id: {}", id);
         Product product = repository.findById(id)
                 .orElseThrow(() -> {
@@ -51,18 +51,18 @@ public class ProductService {
                     return new ProductNotFoundException(id);
                 });
 
-        product.setNombre(dto.getNombre());
-        product.setDescripcion(dto.getDescripcion());
-        product.setPrecio(dto.getPrecio());
-        product.setCategoria(dto.getCategoria());
-        product.setImagenUrl(dto.getImagenUrl());
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setCategory(dto.getCategory());
+        product.setImageUrl(dto.getImageUrl());
         product.setStock(dto.getStock());
 
         return toDTO(repository.save(product));
     }
 
     @Transactional
-    public void eliminar(Integer id) {
+    public void delete(Integer id) {
         log.info("Eliminando producto con id: {}", id);
         Product product = repository.findById(id)
                 .orElseThrow(() -> {
@@ -73,22 +73,22 @@ public class ProductService {
         log.info("Producto con id: {} eliminado", id);
     }
 
-    public ProductResponseDTO buscarPorNombre(String nombre) {
-        log.info("Buscando producto con nombre: {}", nombre);
-        return repository.findByNombre(nombre)
+    public ProductResponseDTO findByName(String name) {
+        log.info("Buscando producto con nombre: {}", name);
+        return repository.findByName(name)
                 .map(this::toDTO)
                 .orElseThrow(() -> {
-                    log.warn("Producto no encontrado con nombre: {}", nombre);
-                    return new ProductNotFoundException(nombre);
+                    log.warn("Producto no encontrado con nombre: {}", name);
+                    return new ProductNotFoundException(name);
                 });
     }
 
-    public Page<ProductResponseDTO> filtrarPorCategoria(String categoria, Pageable pageable) {
-        log.info("Filtrando productos por categoría: {}", categoria);
-        return repository.findByCategoriaIgnoreCase(categoria, pageable).map(this::toDTO);
+    public Page<ProductResponseDTO> filterByCategory(String category, Pageable pageable) {
+        log.info("Filtrando productos por categoría: {}", category);
+        return repository.findByCategoryIgnoreCase(category, pageable).map(this::toDTO);
     }
 
-    public Page<ProductResponseDTO> stockMinimo(Integer min, Pageable pageable) {
+    public Page<ProductResponseDTO> findLowStock(Integer min, Pageable pageable) {
         log.info("Buscando productos con stock <= {}", min);
         return repository.findByStockLessThanEqual(min, pageable).map(this::toDTO);
     }
@@ -96,22 +96,22 @@ public class ProductService {
     private ProductResponseDTO toDTO(Product p) {
         return new ProductResponseDTO(
                 p.getId(),
-                p.getNombre(),
-                p.getDescripcion(),
-                p.getPrecio(),
-                p.getCategoria(),
-                p.getImagenUrl(),
+                p.getName(),
+                p.getDescription(),
+                p.getPrice(),
+                p.getCategory(),
+                p.getImageUrl(),
                 p.getStock()
         );
     }
 
     private Product toEntity(ProductRequestDTO dto) {
         Product p = new Product();
-        p.setNombre(dto.getNombre());
-        p.setDescripcion(dto.getDescripcion());
-        p.setPrecio(dto.getPrecio());
-        p.setCategoria(dto.getCategoria());
-        p.setImagenUrl(dto.getImagenUrl());
+        p.setName(dto.getName());
+        p.setDescription(dto.getDescription());
+        p.setPrice(dto.getPrice());
+        p.setCategory(dto.getCategory());
+        p.setImageUrl(dto.getImageUrl());
         p.setStock(dto.getStock());
         return p;
     }

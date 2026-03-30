@@ -18,48 +18,48 @@ public class ProductController {
     private final ProductService service;
 
     @GetMapping
-    public Page<ProductResponseDTO> listar(
-            @PageableDefault(size = 10, sort = "nombre") Pageable pageable) {
-        return service.listar(pageable);
+    public Page<ProductResponseDTO> findAll(
+            @PageableDefault(size = 10, sort = "name") Pageable pageable) {
+        return service.findAll(pageable);
     }
 
     @GetMapping("/{id}")
-    public ProductResponseDTO obtener(@PathVariable Integer id) {
-        return service.obtenerPorId(id);
+    public ProductResponseDTO findById(@PathVariable Integer id) {
+        return service.findById(id);
     }
 
     @PostMapping
-    public ProductResponseDTO crear(@RequestBody @Valid ProductRequestDTO dto) {
-        return service.guardar(dto);
+    public ProductResponseDTO create(@RequestBody @Valid ProductRequestDTO dto) {
+        return service.save(dto);
     }
 
     @PutMapping("/{id}")
-    public ProductResponseDTO actualizar(@PathVariable Integer id,
-                                         @RequestBody @Valid ProductRequestDTO dto) {
-        return service.actualizar(id, dto);
+    public ProductResponseDTO update(@PathVariable Integer id,
+                                     @RequestBody @Valid ProductRequestDTO dto) {
+        return service.update(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Integer id) {
-        service.eliminar(id);
+    public void delete(@PathVariable Integer id) {
+        service.delete(id);
     }
 
-    @GetMapping("/buscar")
-    public ProductResponseDTO buscarPorNombre(@RequestParam String nombre) {
-        return service.buscarPorNombre(nombre);
+    @GetMapping("/search")
+    public ProductResponseDTO findByName(@RequestParam String name) {
+        return service.findByName(name);
     }
 
-    @GetMapping("/categoria/{categoria}")
-    public Page<ProductResponseDTO> filtrarPorCategoria(
-            @PathVariable String categoria,
-            @PageableDefault(size = 10, sort = "nombre") Pageable pageable) {
-        return service.filtrarPorCategoria(categoria, pageable);
+    @GetMapping("/category/{category}")
+    public Page<ProductResponseDTO> filterByCategory(
+            @PathVariable String category,
+            @PageableDefault(size = 10, sort = "name") Pageable pageable) {
+        return service.filterByCategory(category, pageable);
     }
 
-    @GetMapping("/stock-minimo")
-    public Page<ProductResponseDTO> stockMinimo(
+    @GetMapping("/low-stock")
+    public Page<ProductResponseDTO> findLowStock(
             @RequestParam(defaultValue = "5") Integer min,
             @PageableDefault(size = 10, sort = "stock") Pageable pageable) {
-        return service.stockMinimo(min, pageable);
+        return service.findLowStock(min, pageable);
     }
 }

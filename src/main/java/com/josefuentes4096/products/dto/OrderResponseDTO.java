@@ -9,9 +9,9 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class OrderResponseDTO {
-    private Integer pedidoId;
-    private Integer usuarioId;
-    private OrderStatus estado;
+    private Integer orderId;
+    private Integer userId;
+    private OrderStatus status;
     private Double total;
     private List<OrderItemResponseDTO> items;
 }
