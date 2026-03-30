@@ -5,6 +5,7 @@ import com.josefuentes4096.products.dto.OrderResponseDTO;
 import com.josefuentes4096.products.entity.Order;
 import com.josefuentes4096.products.repository.OrderRepository;
 import com.josefuentes4096.products.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class OrderController {
     private final OrderRepository repository;
 
     @PostMapping
-    public OrderResponseDTO crear(@RequestBody OrderRequestDTO request) {
+    public OrderResponseDTO crear(@RequestBody @Valid OrderRequestDTO request) {
         return service.crearPedido(request);
     }
 
