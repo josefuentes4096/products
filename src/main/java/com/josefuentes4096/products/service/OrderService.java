@@ -74,4 +74,29 @@ public class OrderService {
                 responseItems
         );
     }
+
+    public List<OrderResponseDTO> obtenerHistorial(Integer usuarioId) {
+        return orderRepository.findByUsuarioId(usuarioId)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    private OrderResponseDTO toDTO(Order order) {
+        List<OrderItemResponseDTO> items = order.getItems().stream()
+                .map(item -> new OrderItemResponseDTO(
+                        item.getProduct().getId(),
+                        item.getProduct().getNombre(),
+                        item.getCantidad(),
+                        item.getSubtotal()
+                ))
+                .toList();
+        return new OrderResponseDTO(
+                order.getId(),
+                order.getUsuarioId(),
+                order.getEstado(),
+                order.getTotal(),
+                items
+        );
+    }
 }
