@@ -8,6 +8,7 @@ import com.josefuentes4096.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class ProductService {
                 }));
     }
 
+    @Transactional
     public ProductResponseDTO guardar(ProductRequestDTO dto) {
         log.info("Creando producto: {}", dto.getNombre());
         Product product = toEntity(dto);
@@ -43,6 +45,7 @@ public class ProductService {
         return resultado;
     }
 
+    @Transactional
     public ProductResponseDTO actualizar(Integer id, ProductRequestDTO dto) {
         log.info("Actualizando producto con id: {}", id);
         Product product = repository.findById(id)
@@ -61,6 +64,7 @@ public class ProductService {
         return toDTO(repository.save(product));
     }
 
+    @Transactional
     public void eliminar(Integer id) {
         log.info("Eliminando producto con id: {}", id);
         Product product = repository.findById(id)
