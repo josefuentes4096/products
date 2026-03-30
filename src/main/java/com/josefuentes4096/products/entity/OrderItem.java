@@ -14,6 +14,12 @@ public class OrderItem {
     private Integer id;
 
     @ManyToOne
+    @JoinColumn(name = "order_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Order order;
+
+    @ManyToOne
     private Product product;
 
     private Integer cantidad;

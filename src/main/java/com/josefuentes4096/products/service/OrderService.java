@@ -72,6 +72,8 @@ public class OrderService {
         order.setTotal(total);
         order.setItems(entidades);
 
+        entidades.forEach(item -> item.setOrder(order));
+
         Order saved = orderRepository.save(order);
         log.info("Pedido creado con id: {}, total: {}", saved.getId(), saved.getTotal());
 
