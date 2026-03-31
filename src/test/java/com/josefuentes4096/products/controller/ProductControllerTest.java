@@ -151,7 +151,7 @@ class ProductControllerTest {
         mockMvc.perform(post("/api/products").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Vox AC30"))
                 .andExpect(jsonPath("$.price").value(2200.00))
                 .andExpect(jsonPath("$.category").value("Amplificadores"));
@@ -175,7 +175,7 @@ class ProductControllerTest {
         mockMvc.perform(post("/api/products").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Boss DS-1 Distortion"))
                 .andExpect(jsonPath("$.stock").value(25));
     }
@@ -273,7 +273,7 @@ class ProductControllerTest {
         doNothing().when(service).delete(2);
 
         mockMvc.perform(delete("/api/products/2").with(csrf()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(service).delete(2);
     }

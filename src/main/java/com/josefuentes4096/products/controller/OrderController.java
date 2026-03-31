@@ -5,7 +5,9 @@ import com.josefuentes4096.products.dto.OrderResponseDTO;
 import com.josefuentes4096.products.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ public class OrderController {
     private final OrderService service;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public OrderResponseDTO create(@RequestBody @Valid OrderRequestDTO request) {
         return service.createOrder(request);
     }
