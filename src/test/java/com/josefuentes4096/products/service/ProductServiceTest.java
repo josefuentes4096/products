@@ -4,12 +4,15 @@ import com.josefuentes4096.products.dto.ProductRequestDTO;
 import com.josefuentes4096.products.dto.ProductResponseDTO;
 import com.josefuentes4096.products.entity.Product;
 import com.josefuentes4096.products.exception.ProductNotFoundException;
+import com.josefuentes4096.products.mapper.ProductMapper;
 import com.josefuentes4096.products.repository.ProductRepository;
+import com.josefuentes4096.products.service.impl.ProductServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -29,8 +32,11 @@ class ProductServiceTest {
     @Mock
     private ProductRepository repository;
 
+    @Spy
+    private ProductMapper mapper = new ProductMapper();
+
     @InjectMocks
-    private ProductService service;
+    private ProductServiceImpl service;
 
     private Product stratocaster;
     private Product tubeScreamer;

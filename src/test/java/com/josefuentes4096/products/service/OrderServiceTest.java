@@ -6,8 +6,10 @@ import com.josefuentes4096.products.entity.Product;
 import com.josefuentes4096.products.enums.OrderStatus;
 import com.josefuentes4096.products.exception.InsufficientStockException;
 import com.josefuentes4096.products.exception.ProductNotFoundException;
+import com.josefuentes4096.products.mapper.OrderMapper;
 import com.josefuentes4096.products.repository.OrderRepository;
 import com.josefuentes4096.products.repository.ProductRepository;
+import com.josefuentes4096.products.service.impl.OrderServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,33 +27,29 @@ import static org.mockito.Mockito.*;
 class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
+    @Mock private ProductService productService;
     @Mock private ProductRepository productRepository;
+    @Mock private OrderMapper mapper;
 
     @InjectMocks
-    private OrderService service;
+    private OrderServiceImpl service;
 
-    private Product stratocaster;
-    private Product bossDS1;
-    private Product marshallDsl40;
-    private Product voxAC30;
+    // DTOs de respuesta que retorna productService.decreaseStock()
+    private ProductResponseDTO stratDTO;
+    private ProductResponseDTO bossDTO;
+    private ProductResponseDTO marshallDTO;
+    private ProductResponseDTO voxDTO;
 
     @BeforeEach
     void setUp() {
-        stratocaster = new Product(1, "Fender Stratocaster American Pro II",
-                "Guitarra eléctrica con pastillas V-Mod II",
-                1500.00, "Guitarras", "fender_strat.jpg", 5, null, null);
-
-        bossDS1 = new Product(2, "Boss DS-1 Distortion",
-                "Pedal de distorsión compacto clásico",
-                80.00, "Pedales", "boss_ds1.jpg", 20, null, null);
-
-        marshallDsl40 = new Product(3, "Marshall DSL40CR",
-                "Amplificador valvular de 40W dos canales",
-                1200.00, "Amplificadores", "marshall_dsl40.jpg", 2, null, null);
-
-        voxAC30 = new Product(4, "Vox AC30",
-                "Amplificador valvular de 30W, icono del britpop",
-                2200.00, "Amplificadores", "vox_ac30.jpg", 1, null, null);
+        stratDTO   = new ProductResponseDTO(1, "Fender Stratocaster American Pro II",
+                "Guitarra eléctrica con pastillas V-Mod II", 1500.00, "Guitarras", "fender_strat.jpg", 3);
+        bossDTO    = new ProductResponseDTO(2, "Boss DS-1 Distortion",
+                "Pedal de distorsión compacto clásico",      80.00,   "Pedales",   "boss_ds1.jpg",    18);
+        marshallDTO = new ProductResponseDTO(3, "Marshall DSL40CR",
+                "Amplificador valvular de 40W dos canales",  1200.00, "Amplificadores", "marshall_dsl40.jpg", 1);
+        voxDTO     = new ProductResponseDTO(4, "Vox AC30",
+                "Amplificador valvular de 30W, icono del britpop", 2200.00, "Amplificadores", "vox_ac30.jpg", 0);
     }
 
     // -------------------------------------------------------------------------
@@ -81,7 +78,7 @@ class OrderServiceTest {
     @Test
     void createOrder_compraDosGuitarrasCalculaTotalCorrecto() {
         // 2 Stratocasters x $1500 = $3000
-        when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
+        when(productService.decreaseStock(1, 2)).thenReturn(stratDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(10, 7, 3000.00));
 
         OrderResponseDTO resultado = service.createOrder(buildRequest(7, 1, 2));
@@ -94,7 +91,7 @@ class OrderServiceTest {
     @Test
     void createOrder_compraTresPedalesCalculaTotalCorrecto() {
         // 3 Boss DS-1 x $80 = $240
-        when(productRepository.findById(2)).thenReturn(Optional.of(bossDS1));
+        when(productService.decreaseStock(2, 3)).thenReturn(bossDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(11, 3, 240.00));
 
         OrderResponseDTO resultado = service.createOrder(buildRequest(3, 2, 3));
@@ -104,7 +101,7 @@ class OrderServiceTest {
 
     @Test
     void createOrder_estadoInicialSiempreEsPending() {
-        when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
+        when(productService.decreaseStock(3, 1)).thenReturn(marshallDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(12, 5, 1200.00));
 
         OrderResponseDTO resultado = service.createOrder(buildRequest(5, 3, 1));
@@ -113,40 +110,37 @@ class OrderServiceTest {
     }
 
     // -------------------------------------------------------------------------
-    // Decremento de stock
+    // Decremento de stock — se verifica que se delega a ProductService
     // -------------------------------------------------------------------------
 
     @Test
     void createOrder_decrementaStockDeGuitarraAlComprar() {
-        // stock inicial: 5, compra: 2, stock final esperado: 3
-        when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
+        when(productService.decreaseStock(1, 2)).thenReturn(stratDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(13, 1, 3000.00));
 
         service.createOrder(buildRequest(1, 1, 2));
 
-        assertThat(stratocaster.getStock()).isEqualTo(3);
+        verify(productService).decreaseStock(1, 2);
     }
 
     @Test
     void createOrder_decrementaStockDeAmplificadorAlComprar() {
-        // Marshall: stock 2, compra 1, stock final: 1
-        when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
+        when(productService.decreaseStock(3, 1)).thenReturn(marshallDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(14, 1, 1200.00));
 
         service.createOrder(buildRequest(1, 3, 1));
 
-        assertThat(marshallDsl40.getStock()).isEqualTo(1);
+        verify(productService).decreaseStock(3, 1);
     }
 
     @Test
     void createOrder_agotaStockCuandoSeCompraExactamenteLaCantidadDisponible() {
-        // Vox AC30: solo hay 1 en stock, se compra 1
-        when(productRepository.findById(4)).thenReturn(Optional.of(voxAC30));
+        when(productService.decreaseStock(4, 1)).thenReturn(voxDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(15, 2, 2200.00));
 
         service.createOrder(buildRequest(2, 4, 1));
 
-        assertThat(voxAC30.getStock()).isEqualTo(0);
+        verify(productService).decreaseStock(4, 1);
     }
 
     // -------------------------------------------------------------------------
@@ -155,8 +149,8 @@ class OrderServiceTest {
 
     @Test
     void createOrder_lanzaExcepcionSiSeIntentanComprarMasGuitarrasQueElStock() {
-        // Stratocaster: stock 5, intento comprar 6
-        when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
+        when(productService.decreaseStock(1, 6))
+                .thenThrow(new InsufficientStockException("Fender Stratocaster American Pro II"));
 
         assertThatThrownBy(() -> service.createOrder(buildRequest(1, 1, 6)))
                 .isInstanceOf(InsufficientStockException.class)
@@ -167,8 +161,8 @@ class OrderServiceTest {
 
     @Test
     void createOrder_lanzaExcepcionSiAmplificadorEstaAgotado() {
-        // Vox AC30: stock 1, se intenta comprar 2
-        when(productRepository.findById(4)).thenReturn(Optional.of(voxAC30));
+        when(productService.decreaseStock(4, 2))
+                .thenThrow(new InsufficientStockException("Vox AC30"));
 
         assertThatThrownBy(() -> service.createOrder(buildRequest(1, 4, 2)))
                 .isInstanceOf(InsufficientStockException.class)
@@ -179,8 +173,8 @@ class OrderServiceTest {
 
     @Test
     void createOrder_lanzaExcepcionSiStockEsCero() {
-        marshallDsl40.setStock(0);
-        when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
+        when(productService.decreaseStock(3, 1))
+                .thenThrow(new InsufficientStockException("Marshall DSL40CR"));
 
         assertThatThrownBy(() -> service.createOrder(buildRequest(1, 3, 1)))
                 .isInstanceOf(InsufficientStockException.class);
@@ -194,7 +188,8 @@ class OrderServiceTest {
 
     @Test
     void createOrder_lanzaExcepcionSiGuitarraNoExisteEnCatalogo() {
-        when(productRepository.findById(99)).thenReturn(Optional.empty());
+        when(productService.decreaseStock(99, 1))
+                .thenThrow(new ProductNotFoundException(99));
 
         assertThatThrownBy(() -> service.createOrder(buildRequest(1, 99, 1)))
                 .isInstanceOf(ProductNotFoundException.class)
@@ -203,7 +198,8 @@ class OrderServiceTest {
 
     @Test
     void createOrder_noGuardaPedidoSiElProductoNoExiste() {
-        when(productRepository.findById(99)).thenReturn(Optional.empty());
+        when(productService.decreaseStock(99, 1))
+                .thenThrow(new ProductNotFoundException(99));
 
         assertThatThrownBy(() -> service.createOrder(buildRequest(1, 99, 1)))
                 .isInstanceOf(ProductNotFoundException.class);
@@ -230,8 +226,8 @@ class OrderServiceTest {
         request.setUserId(10);
         request.setItems(List.of(itemGuitarra, itemPedal));
 
-        when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
-        when(productRepository.findById(2)).thenReturn(Optional.of(bossDS1));
+        when(productService.decreaseStock(1, 1)).thenReturn(stratDTO);
+        when(productService.decreaseStock(2, 2)).thenReturn(bossDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(20, 10, 1660.00));
 
         OrderResponseDTO resultado = service.createOrder(request);
@@ -255,14 +251,14 @@ class OrderServiceTest {
         request.setUserId(5);
         request.setItems(List.of(itemMarshall, itemVox));
 
-        when(productRepository.findById(3)).thenReturn(Optional.of(marshallDsl40));
-        when(productRepository.findById(4)).thenReturn(Optional.of(voxAC30));
+        when(productService.decreaseStock(3, 1)).thenReturn(marshallDTO);
+        when(productService.decreaseStock(4, 1)).thenReturn(voxDTO);
         when(orderRepository.save(any())).thenReturn(savedOrder(21, 5, 3400.00));
 
         service.createOrder(request);
 
-        assertThat(marshallDsl40.getStock()).isEqualTo(1); // 2 - 1
-        assertThat(voxAC30.getStock()).isEqualTo(0);       // 1 - 1
+        verify(productService).decreaseStock(3, 1);
+        verify(productService).decreaseStock(4, 1);
     }
 
     @Test
@@ -280,11 +276,9 @@ class OrderServiceTest {
         request.setUserId(8);
         request.setItems(List.of(itemGuitarra, itemPedal));
 
-        when(productRepository.findById(1)).thenReturn(Optional.of(stratocaster));
-        when(productRepository.findById(2)).thenReturn(Optional.of(bossDS1));
-
-        Order saved = new Order(22, 8, OrderStatus.PENDING, 1900.00, List.of(), null, null);
-        when(orderRepository.save(any())).thenReturn(saved);
+        when(productService.decreaseStock(1, 1)).thenReturn(stratDTO);
+        when(productService.decreaseStock(2, 5)).thenReturn(bossDTO);
+        when(orderRepository.save(any())).thenReturn(savedOrder(22, 8, 1900.00));
 
         OrderResponseDTO resultado = service.createOrder(request);
 
