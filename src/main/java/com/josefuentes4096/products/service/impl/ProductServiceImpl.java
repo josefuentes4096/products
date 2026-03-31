@@ -24,12 +24,14 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper mapper;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ProductResponseDTO> findAll(Pageable pageable) {
         log.debug("Listando productos - página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductResponseDTO findById(Integer id) {
         log.debug("Buscando producto con id: {}", id);
         return mapper.toDTO(repository.findById(id)
@@ -82,6 +84,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductResponseDTO findByName(String name) {
         log.debug("Buscando producto con nombre: {}", name);
         return repository.findByName(name)
@@ -93,12 +96,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ProductResponseDTO> filterByCategory(String category, Pageable pageable) {
         log.debug("Filtrando productos por categoría: {}", category);
         return repository.findByCategoryIgnoreCase(category, pageable).map(mapper::toDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ProductResponseDTO> findLowStock(Integer min, Pageable pageable) {
         log.debug("Buscando productos con stock <= {}", min);
         return repository.findByStockLessThanEqual(min, pageable).map(mapper::toDTO);

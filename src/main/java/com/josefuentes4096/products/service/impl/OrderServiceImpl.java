@@ -81,6 +81,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<OrderResponseDTO> getOrderHistory(Integer userId) {
         log.debug("Consultando historial de pedidos para usuario: {}", userId);
         return orderRepository.findByUserId(userId)
