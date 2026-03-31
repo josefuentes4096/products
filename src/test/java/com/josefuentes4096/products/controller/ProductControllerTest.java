@@ -7,6 +7,7 @@ import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ProductController.class)
 @WithMockUser
+@TestPropertySource(properties = "products.low-stock.threshold=5")
 class ProductControllerTest {
 
     @Autowired MockMvc mockMvc;
