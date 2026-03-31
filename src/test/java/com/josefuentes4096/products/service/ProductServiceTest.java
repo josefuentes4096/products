@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,15 +47,15 @@ class ProductServiceTest {
     void setUp() {
         stratocaster = new Product(1, "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica de cuerpo sólido con pastillas V-Mod II",
-                1500.00, "Guitarras", "fender_strat.jpg", 8, null, null);
+                BigDecimal.valueOf(1500.00), "Guitarras", "fender_strat.jpg", 8, null, null);
 
         tubeScreamer = new Product(2, "Ibanez Tube Screamer TS9",
                 "Pedal de overdrive clásico, el favorito de Stevie Ray Vaughan",
-                120.00, "Pedales", "ts9.jpg", 15, null, null);
+                BigDecimal.valueOf(120.00), "Pedales", "ts9.jpg", 15, null, null);
 
         marshallDsl40 = new Product(3, "Marshall DSL40CR",
                 "Amplificador valvular de 40W con dos canales y reverb",
-                1200.00, "Amplificadores", "marshall_dsl40.jpg", 3, null, null);
+                BigDecimal.valueOf(1200.00), "Amplificadores", "marshall_dsl40.jpg", 3, null, null);
     }
 
     // -------------------------------------------------------------------------
@@ -97,7 +98,7 @@ class ProductServiceTest {
 
         assertThat(resultado.getId()).isEqualTo(1);
         assertThat(resultado.getName()).isEqualTo("Fender Stratocaster American Pro II");
-        assertThat(resultado.getPrice()).isEqualTo(1500.00);
+        assertThat(resultado.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(1500.00));
         assertThat(resultado.getCategory()).isEqualTo("Guitarras");
     }
 
@@ -129,20 +130,20 @@ class ProductServiceTest {
         ProductRequestDTO dto = new ProductRequestDTO();
         dto.setName("Vox AC30");
         dto.setDescription("Amplificador valvular de 30W, icono del sonido británico");
-        dto.setPrice(2200.00);
+        dto.setPrice(BigDecimal.valueOf(2200.00));
         dto.setCategory("Amplificadores");
         dto.setImageUrl("vox_ac30.jpg");
         dto.setStock(2);
 
         Product guardado = new Product(4, "Vox AC30",
                 "Amplificador valvular de 30W, icono del sonido británico",
-                2200.00, "Amplificadores", "vox_ac30.jpg", 2, null, null);
+                BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 2, null, null);
         when(repository.save(any())).thenReturn(guardado);
 
         ProductResponseDTO resultado = service.save(dto);
 
         assertThat(resultado.getName()).isEqualTo("Vox AC30");
-        assertThat(resultado.getPrice()).isEqualTo(2200.00);
+        assertThat(resultado.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(2200.00));
         assertThat(resultado.getStock()).isEqualTo(2);
         verify(repository).save(any(Product.class));
     }
@@ -152,14 +153,14 @@ class ProductServiceTest {
         ProductRequestDTO dto = new ProductRequestDTO();
         dto.setName("Boss DS-1 Distortion");
         dto.setDescription("Pedal de distorsión compacto, el más vendido en la historia");
-        dto.setPrice(80.00);
+        dto.setPrice(BigDecimal.valueOf(80.00));
         dto.setCategory("Pedales");
         dto.setImageUrl("boss_ds1.jpg");
         dto.setStock(20);
 
         Product guardado = new Product(5, "Boss DS-1 Distortion",
                 "Pedal de distorsión compacto, el más vendido en la historia",
-                80.00, "Pedales", "boss_ds1.jpg", 20, null, null);
+                BigDecimal.valueOf(80.00), "Pedales", "boss_ds1.jpg", 20, null, null);
         when(repository.save(any())).thenReturn(guardado);
 
         ProductResponseDTO resultado = service.save(dto);
@@ -178,7 +179,7 @@ class ProductServiceTest {
         ProductRequestDTO dto = new ProductRequestDTO();
         dto.setName("Fender Stratocaster American Pro II");
         dto.setDescription("Guitarra eléctrica de cuerpo sólido con pastillas V-Mod II");
-        dto.setPrice(1650.00);
+        dto.setPrice(BigDecimal.valueOf(1650.00));
         dto.setCategory("Guitarras");
         dto.setImageUrl("fender_strat_v2.jpg");
         dto.setStock(5);
@@ -188,7 +189,7 @@ class ProductServiceTest {
 
         ProductResponseDTO resultado = service.update(1, dto);
 
-        assertThat(resultado.getPrice()).isEqualTo(1650.00);
+        assertThat(resultado.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(1650.00));
         assertThat(resultado.getStock()).isEqualTo(5);
         assertThat(resultado.getImageUrl()).isEqualTo("fender_strat_v2.jpg");
     }
@@ -198,7 +199,7 @@ class ProductServiceTest {
         ProductRequestDTO dto = new ProductRequestDTO();
         dto.setName("Marshall DSL40CR");
         dto.setDescription("Amplificador valvular 40W - edición 2024 con nueva reverb digital");
-        dto.setPrice(1250.00);
+        dto.setPrice(BigDecimal.valueOf(1250.00));
         dto.setCategory("Amplificadores");
         dto.setImageUrl("marshall_dsl40_2024.jpg");
         dto.setStock(3);
@@ -209,7 +210,7 @@ class ProductServiceTest {
         ProductResponseDTO resultado = service.update(3, dto);
 
         assertThat(resultado.getDescription()).contains("2024");
-        assertThat(resultado.getPrice()).isEqualTo(1250.00);
+        assertThat(resultado.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(1250.00));
     }
 
     @Test
@@ -274,7 +275,7 @@ class ProductServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Product lesPaul = new Product(6, "Gibson Les Paul Standard",
                 "Guitarra eléctrica con cuerpo de caoba y tapa de arce flameado",
-                2800.00, "Guitarras", "gibson_lp.jpg", 2, null, null);
+                BigDecimal.valueOf(2800.00), "Guitarras", "gibson_lp.jpg", 2, null, null);
 
         when(repository.findByCategoryIgnoreCase("guitarras", pageable))
                 .thenReturn(new PageImpl<>(List.of(stratocaster, lesPaul)));
@@ -291,7 +292,7 @@ class ProductServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Product hallOfFame = new Product(7, "TC Electronic Hall of Fame 2",
                 "Pedal de reverb con TonePrint y algoritmos de sala",
-                150.00, "Pedales", "hof2.jpg", 12, null, null);
+                BigDecimal.valueOf(150.00), "Pedales", "hof2.jpg", 12, null, null);
 
         when(repository.findByCategoryIgnoreCase("PEDALES", pageable))
                 .thenReturn(new PageImpl<>(List.of(tubeScreamer, hallOfFame)));
@@ -319,7 +320,7 @@ class ProductServiceTest {
     void findLowStock_retornaAmplificadoresConStockBajo() {
         Pageable pageable = PageRequest.of(0, 10);
         Product voxAC30 = new Product(4, "Vox AC30",
-                "Amplificador valvular de 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1, null, null);
+                "Amplificador valvular de 30W", BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 1, null, null);
 
         when(repository.findByStockLessThanEqual(5, pageable))
                 .thenReturn(new PageImpl<>(List.of(marshallDsl40, voxAC30)));

@@ -11,6 +11,8 @@ import com.josefuentes4096.products.repository.OrderRepository;
 import com.josefuentes4096.products.repository.ProductRepository;
 import com.josefuentes4096.products.service.impl.OrderServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
+
+import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,13 +45,13 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
         stratDTO   = new ProductResponseDTO(1, "Fender Stratocaster American Pro II",
-                "Guitarra eléctrica con pastillas V-Mod II", 1500.00, "Guitarras", "fender_strat.jpg", 3);
+                "Guitarra eléctrica con pastillas V-Mod II", BigDecimal.valueOf(1500.00), "Guitarras", "fender_strat.jpg", 3);
         bossDTO    = new ProductResponseDTO(2, "Boss DS-1 Distortion",
-                "Pedal de distorsión compacto clásico",      80.00,   "Pedales",   "boss_ds1.jpg",    18);
+                "Pedal de distorsión compacto clásico",      BigDecimal.valueOf(80.00),   "Pedales",   "boss_ds1.jpg",    18);
         marshallDTO = new ProductResponseDTO(3, "Marshall DSL40CR",
-                "Amplificador valvular de 40W dos canales",  1200.00, "Amplificadores", "marshall_dsl40.jpg", 1);
+                "Amplificador valvular de 40W dos canales",  BigDecimal.valueOf(1200.00), "Amplificadores", "marshall_dsl40.jpg", 1);
         voxDTO     = new ProductResponseDTO(4, "Vox AC30",
-                "Amplificador valvular de 30W, icono del britpop", 2200.00, "Amplificadores", "vox_ac30.jpg", 0);
+                "Amplificador valvular de 30W, icono del britpop", BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 0);
     }
 
     // -------------------------------------------------------------------------
@@ -68,7 +70,7 @@ class OrderServiceTest {
     }
 
     private Order savedOrder(int id, int userId, double total) {
-        return new Order(id, userId, OrderStatus.PENDING, total, List.of(), null, null);
+        return new Order(id, userId, OrderStatus.PENDING, BigDecimal.valueOf(total), List.of(), null, null);
     }
 
     // -------------------------------------------------------------------------
@@ -83,7 +85,7 @@ class OrderServiceTest {
 
         OrderResponseDTO resultado = service.createOrder(buildRequest(7, 1, 2));
 
-        assertThat(resultado.getTotal()).isEqualTo(3000.00);
+        assertThat(resultado.getTotal()).isEqualByComparingTo(BigDecimal.valueOf(3000.00));
         assertThat(resultado.getStatus()).isEqualTo(OrderStatus.PENDING);
         assertThat(resultado.getUserId()).isEqualTo(7);
     }
@@ -96,7 +98,7 @@ class OrderServiceTest {
 
         OrderResponseDTO resultado = service.createOrder(buildRequest(3, 2, 3));
 
-        assertThat(resultado.getTotal()).isEqualTo(240.00);
+        assertThat(resultado.getTotal()).isEqualByComparingTo(BigDecimal.valueOf(240.00));
     }
 
     @Test
@@ -232,7 +234,7 @@ class OrderServiceTest {
 
         OrderResponseDTO resultado = service.createOrder(request);
 
-        assertThat(resultado.getTotal()).isEqualTo(1660.00);
+        assertThat(resultado.getTotal()).isEqualByComparingTo(BigDecimal.valueOf(1660.00));
         assertThat(resultado.getUserId()).isEqualTo(10);
     }
 
@@ -283,6 +285,6 @@ class OrderServiceTest {
         OrderResponseDTO resultado = service.createOrder(request);
 
         assertThat(resultado.getOrderId()).isEqualTo(22);
-        assertThat(resultado.getTotal()).isEqualTo(1900.00);
+        assertThat(resultado.getTotal()).isEqualByComparingTo(BigDecimal.valueOf(1900.00));
     }
 }

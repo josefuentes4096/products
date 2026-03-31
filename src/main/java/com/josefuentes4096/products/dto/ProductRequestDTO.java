@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class ProductRequestDTO {
 
@@ -14,7 +16,7 @@ public class ProductRequestDTO {
     private String description;
 
     @Positive(message = "El precio debe ser mayor a 0")
-    private Double price;
+    private BigDecimal price;
 
     private String category;
 

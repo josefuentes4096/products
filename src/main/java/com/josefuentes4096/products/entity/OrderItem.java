@@ -1,6 +1,7 @@
 package com.josefuentes4096.products.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import lombok.*;
 
 @Entity
@@ -25,7 +26,7 @@ public class OrderItem {
     @Column(name = "cantidad")
     private Integer quantity;
 
-    private Double subtotal;
+    private BigDecimal subtotal;
 
     @Override
     public boolean equals(Object o) {

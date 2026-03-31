@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,13 +37,13 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderItem> entities = new ArrayList<>();
         List<OrderItemResponseDTO> responseItems = new ArrayList<>();
-        double total = 0;
+        BigDecimal total = BigDecimal.ZERO;
 
         for (OrderItemRequestDTO dto : request.getItems()) {
             // Delega validación de stock + descuento a ProductService (SRP/DIP)
             ProductResponseDTO product = productService.decreaseStock(dto.getProductId(), dto.getQuantity());
 
-            double subtotal = product.getPrice() * dto.getQuantity();
+            BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity()));
 
             OrderItem item = new OrderItem();
             item.setProduct(productRepository.getReferenceById(dto.getProductId()));
@@ -57,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
                     subtotal
             ));
 
-            total += subtotal;
+            total = total.add(subtotal);
         }
 
         Order order = new Order();

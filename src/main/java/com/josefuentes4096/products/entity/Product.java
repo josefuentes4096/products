@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -33,7 +34,7 @@ public class Product {
 
     @Positive(message = "El precio debe ser mayor a 0")
     @Column(name = "precio")
-    private Double price;
+    private BigDecimal price;
 
     @Column(name = "categoria")
     private String category;

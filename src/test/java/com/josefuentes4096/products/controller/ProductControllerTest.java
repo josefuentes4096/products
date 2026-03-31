@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -40,26 +41,26 @@ class ProductControllerTest {
     private ProductResponseDTO stratocasterResponse() {
         return new ProductResponseDTO(1, "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica con pastillas V-Mod II",
-                1500.00, "Guitarras", "fender_strat.jpg", 8);
+                BigDecimal.valueOf(1500.00), "Guitarras", "fender_strat.jpg", 8);
     }
 
     private ProductResponseDTO tubeScreamerResponse() {
         return new ProductResponseDTO(2, "Ibanez Tube Screamer TS9",
                 "Pedal de overdrive clásico",
-                120.00, "Pedales", "ts9.jpg", 15);
+                BigDecimal.valueOf(120.00), "Pedales", "ts9.jpg", 15);
     }
 
     private ProductResponseDTO marshallResponse() {
         return new ProductResponseDTO(3, "Marshall DSL40CR",
                 "Amplificador valvular de 40W",
-                1200.00, "Amplificadores", "marshall_dsl40.jpg", 3);
+                BigDecimal.valueOf(1200.00), "Amplificadores", "marshall_dsl40.jpg", 3);
     }
 
     private ProductRequestDTO stratocasterRequest() {
         ProductRequestDTO dto = new ProductRequestDTO();
         dto.setName("Fender Stratocaster American Pro II");
         dto.setDescription("Guitarra eléctrica con pastillas V-Mod II");
-        dto.setPrice(1500.00);
+        dto.setPrice(BigDecimal.valueOf(1500.00));
         dto.setCategory("Guitarras");
         dto.setImageUrl("fender_strat.jpg");
         dto.setStock(8);
@@ -135,14 +136,14 @@ class ProductControllerTest {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Vox AC30");
         request.setDescription("Amplificador valvular 30W icono del sonido británico");
-        request.setPrice(2200.00);
+        request.setPrice(BigDecimal.valueOf(2200.00));
         request.setCategory("Amplificadores");
         request.setImageUrl("vox_ac30.jpg");
         request.setStock(2);
 
         ProductResponseDTO response = new ProductResponseDTO(4, "Vox AC30",
                 "Amplificador valvular 30W icono del sonido británico",
-                2200.00, "Amplificadores", "vox_ac30.jpg", 2);
+                BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 2);
         when(service.save(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -159,14 +160,14 @@ class ProductControllerTest {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Boss DS-1 Distortion");
         request.setDescription("Pedal de distorsión compacto más vendido de la historia");
-        request.setPrice(80.00);
+        request.setPrice(BigDecimal.valueOf(80.00));
         request.setCategory("Pedales");
         request.setImageUrl("boss_ds1.jpg");
         request.setStock(25);
 
         ProductResponseDTO response = new ProductResponseDTO(5, "Boss DS-1 Distortion",
                 "Pedal de distorsión compacto más vendido de la historia",
-                80.00, "Pedales", "boss_ds1.jpg", 25);
+                BigDecimal.valueOf(80.00), "Pedales", "boss_ds1.jpg", 25);
         when(service.save(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -181,7 +182,7 @@ class ProductControllerTest {
     void POST_create_retorna400SiNombreDeInstrumentoEsBlanco() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("");
-        request.setPrice(500.00);
+        request.setPrice(BigDecimal.valueOf(500.00));
         request.setStock(3);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -194,7 +195,7 @@ class ProductControllerTest {
     void POST_create_retorna400SiPrecioEsCero() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Gibson Les Paul Standard");
-        request.setPrice(0.0);
+        request.setPrice(BigDecimal.ZERO);
         request.setStock(1);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -207,7 +208,7 @@ class ProductControllerTest {
     void POST_create_retorna400SiPrecioEsNegativo() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Pedal genérico");
-        request.setPrice(-50.0);
+        request.setPrice(BigDecimal.valueOf(-50.0));
         request.setStock(5);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -220,7 +221,7 @@ class ProductControllerTest {
     void POST_create_retorna400SiStockEsNegativo() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Fender Telecaster");
-        request.setPrice(1100.00);
+        request.setPrice(BigDecimal.valueOf(1100.00));
         request.setStock(-1);
 
         mockMvc.perform(post("/api/products").with(csrf())
@@ -236,12 +237,12 @@ class ProductControllerTest {
     @Test
     void PUT_update_retorna200AlActualizarGuitarra() throws Exception {
         ProductRequestDTO request = stratocasterRequest();
-        request.setPrice(1650.00);
+        request.setPrice(BigDecimal.valueOf(1650.00));
 
         ProductResponseDTO response = new ProductResponseDTO(1,
                 "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica con pastillas V-Mod II",
-                1650.00, "Guitarras", "fender_strat.jpg", 8);
+                BigDecimal.valueOf(1650.00), "Guitarras", "fender_strat.jpg", 8);
         when(service.update(eq(1), any())).thenReturn(response);
 
         mockMvc.perform(put("/api/products/1").with(csrf())
@@ -305,7 +306,7 @@ class ProductControllerTest {
     @Test
     void GET_filterByCategory_retornaAmplificadoresValvulares() throws Exception {
         ProductResponseDTO voxResponse = new ProductResponseDTO(4, "Vox AC30",
-                "Amplificador valvular 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
+                "Amplificador valvular 30W", BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 1);
 
         when(service.filterByCategory(eq("Amplificadores"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(marshallResponse(), voxResponse)));
@@ -322,7 +323,7 @@ class ProductControllerTest {
         ProductResponseDTO hallOfFameResponse = new ProductResponseDTO(7,
                 "TC Electronic Hall of Fame 2",
                 "Pedal de reverb con TonePrint",
-                150.00, "Pedales", "hof2.jpg", 12);
+                BigDecimal.valueOf(150.00), "Pedales", "hof2.jpg", 12);
 
         when(service.filterByCategory(eq("Pedales"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(tubeScreamerResponse(), hallOfFameResponse)));
@@ -354,7 +355,7 @@ class ProductControllerTest {
     @Test
     void GET_findLowStock_usaParametroPersonalizadoParaInstrumentosEscasos() throws Exception {
         ProductResponseDTO voxResponse = new ProductResponseDTO(4, "Vox AC30",
-                "Amplificador valvular 30W", 2200.00, "Amplificadores", "vox_ac30.jpg", 1);
+                "Amplificador valvular 30W", BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 1);
 
         when(service.findLowStock(eq(2), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(voxResponse)));
