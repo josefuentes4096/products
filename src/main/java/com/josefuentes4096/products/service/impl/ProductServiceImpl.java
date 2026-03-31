@@ -25,13 +25,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponseDTO> findAll(Pageable pageable) {
-        log.info("Listando productos - página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
+        log.debug("Listando productos - página {}, tamaño {}", pageable.getPageNumber(), pageable.getPageSize());
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
     @Override
     public ProductResponseDTO findById(Integer id) {
-        log.info("Buscando producto con id: {}", id);
+        log.debug("Buscando producto con id: {}", id);
         return mapper.toDTO(repository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Producto no encontrado con id: {}", id);
@@ -83,7 +83,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponseDTO findByName(String name) {
-        log.info("Buscando producto con nombre: {}", name);
+        log.debug("Buscando producto con nombre: {}", name);
         return repository.findByName(name)
                 .map(mapper::toDTO)
                 .orElseThrow(() -> {
@@ -94,13 +94,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponseDTO> filterByCategory(String category, Pageable pageable) {
-        log.info("Filtrando productos por categoría: {}", category);
+        log.debug("Filtrando productos por categoría: {}", category);
         return repository.findByCategoryIgnoreCase(category, pageable).map(mapper::toDTO);
     }
 
     @Override
     public Page<ProductResponseDTO> findLowStock(Integer min, Pageable pageable) {
-        log.info("Buscando productos con stock <= {}", min);
+        log.debug("Buscando productos con stock <= {}", min);
         return repository.findByStockLessThanEqual(min, pageable).map(mapper::toDTO);
     }
 

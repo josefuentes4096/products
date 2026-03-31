@@ -82,7 +82,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponseDTO> getOrderHistory(Integer userId) {
-        log.info("Consultando historial de pedidos para usuario: {}", userId);
+        log.debug("Consultando historial de pedidos para usuario: {}", userId);
         return orderRepository.findByUserId(userId)
                 .stream()
                 .map(mapper::toDTO)
