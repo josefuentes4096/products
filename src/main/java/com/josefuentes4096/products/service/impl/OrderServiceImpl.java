@@ -71,13 +71,7 @@ public class OrderServiceImpl implements OrderService {
         Order saved = orderRepository.save(order);
         log.info("Pedido creado con id: {}, total: {}", saved.getId(), saved.getTotal());
 
-        return new OrderResponseDTO(
-                saved.getId(),
-                saved.getUserId(),
-                saved.getStatus(),
-                saved.getTotal(),
-                responseItems
-        );
+        return mapper.toDTO(saved, responseItems);
     }
 
     @Override

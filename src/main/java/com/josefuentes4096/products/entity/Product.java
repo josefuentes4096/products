@@ -1,9 +1,6 @@
 package com.josefuentes4096.products.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -11,7 +8,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Entity
 @Getter
@@ -25,14 +21,12 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotBlank(message = "El nombre es obligatorio")
     @Column(name = "nombre")
     private String name;
 
     @Column(name = "descripcion")
     private String description;
 
-    @Positive(message = "El precio debe ser mayor a 0")
     @Column(name = "precio")
     private BigDecimal price;
 
@@ -42,7 +36,6 @@ public class Product {
     @Column(name = "imagen_url")
     private String imageUrl;
 
-    @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stock;
 
     @CreatedDate

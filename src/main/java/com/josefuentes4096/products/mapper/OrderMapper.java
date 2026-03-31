@@ -15,6 +15,10 @@ public class OrderMapper {
         List<OrderItemResponseDTO> items = order.getItems().stream()
                 .map(this::toItemDTO)
                 .toList();
+        return toDTO(order, items);
+    }
+
+    public OrderResponseDTO toDTO(Order order, List<OrderItemResponseDTO> items) {
         return new OrderResponseDTO(
                 order.getId(),
                 order.getUserId(),
