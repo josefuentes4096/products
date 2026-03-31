@@ -1,0 +1,27 @@
+-- Datos de ejemplo: guitarras eléctricas, pedales de efecto y amplificadores valvulares
+
+SET NAMES utf8mb4;
+
+TRUNCATE TABLE product;
+
+INSERT INTO product (nombre, descripcion, precio, categoria, imagen_url, stock, created_at, updated_at) VALUES
+-- Guitarras eléctricas
+('Fender Stratocaster American Pro II',     'Guitarra electrica de cuerpo solido con pastillas V-Mod II y cuello en C moderno',            1500.00, 'Guitarras',      'https://placehold.co/400x300?text=Stratocaster',    8,  NOW(), NOW()),
+('Gibson Les Paul Standard 60s',            'Guitarra electrica con cuerpo de caoba, tapa de arce flameado y pastillas Burstbucker',        2800.00, 'Guitarras',      'https://placehold.co/400x300?text=LesPaul',         5,  NOW(), NOW()),
+('Fender Telecaster American Professional', 'Guitarra electrica de cuerpo de aliso con pastillas V-Mod II single-coil',                    1450.00, 'Guitarras',      'https://placehold.co/400x300?text=Telecaster',      6,  NOW(), NOW()),
+('Gibson SG Standard',                      'Guitarra electrica de doble cutaway con cuerpo de caoba y pastillas 490R/490T',               1200.00, 'Guitarras',      'https://placehold.co/400x300?text=SGStandard',      4,  NOW(), NOW()),
+('PRS SE Custom 24',                        'Guitarra electrica con tapa de arce y pastillas humbucker SE 85/15',                           850.00, 'Guitarras',      'https://placehold.co/400x300?text=PRSCustom24',     7,  NOW(), NOW()),
+
+-- Pedales de efecto
+('Ibanez Tube Screamer TS9',               'Pedal de overdrive clasico con circuito simetrico de recorte y control de tono',               120.00, 'Pedales',        'https://placehold.co/400x300?text=TubeScreamer',   15,  NOW(), NOW()),
+('Boss DS-1 Distortion',                   'Pedal de distorsion compacto, el mas vendido en la historia con sonido agresivo y definido',    80.00, 'Pedales',        'https://placehold.co/400x300?text=BossDS1',        25,  NOW(), NOW()),
+('Electro-Harmonix Big Muff Pi',           'Pedal de fuzz con sustain masivo, favorito del grunge y el rock alternativo',                  110.00, 'Pedales',        'https://placehold.co/400x300?text=BigMuff',        12,  NOW(), NOW()),
+('TC Electronic Hall of Fame 2',           'Pedal de reverb con tecnologia TonePrint, shimmer y algoritmos de sala, plate y spring',       150.00, 'Pedales',        'https://placehold.co/400x300?text=HallOfFame',     10,  NOW(), NOW()),
+('MXR Phase 90',                           'Pedal de phaser de cuatro etapas, sonido clasico usado por Eddie Van Halen',                    95.00, 'Pedales',        'https://placehold.co/400x300?text=Phase90',        18,  NOW(), NOW()),
+('Boss DD-8 Digital Delay',                'Pedal de delay digital con 11 modos, looper de 40 segundos y tap tempo',                       180.00, 'Pedales',        'https://placehold.co/400x300?text=BossDD8',         9,  NOW(), NOW()),
+
+-- Amplificadores valvulares
+('Marshall DSL40CR',                       'Amplificador valvular de 40W con dos canales, reverb digital y potencia reducible a 20W',     1200.00, 'Amplificadores', 'https://placehold.co/400x300?text=MarshallDSL40',   3,  NOW(), NOW()),
+('Vox AC30C2',                             'Amplificador valvular de 30W con dos canales, tremolo y reverb, icono del sonido britanico',  1800.00, 'Amplificadores', 'https://placehold.co/400x300?text=VoxAC30',         2,  NOW(), NOW()),
+('Fender Blues Junior IV',                 'Amplificador valvular de 15W con reverb spring y control de tono FAT',                         700.00, 'Amplificadores', 'https://placehold.co/400x300?text=BluesJunior',     4,  NOW(), NOW()),
+('Mesa Boogie Rectoverb 25',              'Amplificador valvular de 25W con dos canales y rectificador de alta ganancia',                 2500.00, 'Amplificadores', 'https://placehold.co/400x300?text=MesaBoogie',      1,  NOW(), NOW());
