@@ -3,14 +3,15 @@ package com.josefuentes4096.products.service;
 import com.josefuentes4096.products.dto.ProductRequestDTO;
 import com.josefuentes4096.products.dto.ProductResponseDTO;
 import com.josefuentes4096.products.entity.Product;
+import com.josefuentes4096.products.entity.Setting;
 import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.mapper.ProductMapper;
 import com.josefuentes4096.products.repository.ProductRepository;
+import com.josefuentes4096.products.repository.SettingRepository;
 import com.josefuentes4096.products.service.impl.ProductServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +24,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -33,10 +36,12 @@ class ProductServiceTest {
     @Mock
     private ProductRepository repository;
 
+    @Mock
+    private SettingRepository settingRepository;
+
     @Spy
     private ProductMapper mapper = new ProductMapper();
 
-    @InjectMocks
     private ProductServiceImpl service;
 
     private Product stratocaster;
@@ -45,6 +50,8 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
+        service = new ProductServiceImpl(repository, mapper, settingRepository);
+
         stratocaster = new Product(1, "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica de cuerpo sólido con pastillas V-Mod II",
                 BigDecimal.valueOf(1500.00), "Guitarras", "fender_strat.jpg", 8, null, null);
@@ -338,6 +345,33 @@ class ProductServiceTest {
         when(repository.findByStockLessThanEqual(0, pageable)).thenReturn(Page.empty());
 
         assertThat(service.findLowStock(0, pageable).getContent()).isEmpty();
+    }
+
+    @Test
+    void findLowStock_usaUmbralDeBDCuandoMinEsNull() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(settingRepository.findByKey("minimum_stock"))
+                .thenReturn(Optional.of(new Setting(1, "minimum_stock", "5")));
+        when(repository.findByStockLessThanEqual(5, pageable))
+                .thenReturn(new PageImpl<>(List.of(marshallDsl40)));
+
+        Page<ProductResponseDTO> resultado = service.findLowStock(null, pageable);
+
+        assertThat(resultado.getContent()).hasSize(1);
+        verify(repository).findByStockLessThanEqual(5, pageable);
+    }
+
+    @Test
+    void findLowStock_usaFallbackCuandoNoExisteConfiguracion() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(settingRepository.findByKey("minimum_stock")).thenReturn(Optional.empty());
+        when(repository.findByStockLessThanEqual(5, pageable))
+                .thenReturn(new PageImpl<>(List.of(marshallDsl40)));
+
+        Page<ProductResponseDTO> resultado = service.findLowStock(null, pageable);
+
+        assertThat(resultado.getContent()).hasSize(1);
+        verify(repository).findByStockLessThanEqual(5, pageable);
     }
 
     @Test

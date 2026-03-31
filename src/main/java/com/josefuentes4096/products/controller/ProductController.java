@@ -5,7 +5,6 @@ import com.josefuentes4096.products.dto.ProductResponseDTO;
 import com.josefuentes4096.products.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -19,9 +18,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ProductController {
 
     private final ProductService service;
-
-    @Value("${products.low-stock.threshold}")
-    private int lowStockThreshold;
 
     @GetMapping
     public Page<ProductResponseDTO> findAll(
@@ -68,6 +64,6 @@ public class ProductController {
     public Page<ProductResponseDTO> findLowStock(
             @RequestParam(required = false) Integer min,
             @PageableDefault(size = 10, sort = "stock") Pageable pageable) {
-        return service.findLowStock(min != null ? min : lowStockThreshold, pageable);
+        return service.findLowStock(min, pageable);
     }
 }

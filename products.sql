@@ -1,6 +1,63 @@
--- Datos de ejemplo: guitarras eléctricas, pedales de efecto y amplificadores valvulares
+-- Setup completo: schema + datos de ejemplo
+-- Guitarras eléctricas, pedales de efecto y amplificadores valvulares
 
 SET NAMES utf8mb4;
+
+-- -------------------------------------------------------------------------
+-- Schema
+-- -------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS settings (
+    id            INT          NOT NULL AUTO_INCREMENT,
+    setting_key   VARCHAR(100) NOT NULL,
+    setting_value VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_settings_key (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS product (
+    id          INT            NOT NULL AUTO_INCREMENT,
+    nombre      VARCHAR(255)   NOT NULL,
+    descripcion TEXT,
+    precio      DECIMAL(10,2)  NOT NULL,
+    categoria   VARCHAR(100),
+    imagen_url  VARCHAR(500),
+    stock       INT            NOT NULL DEFAULT 0,
+    created_at  DATETIME,
+    updated_at  DATETIME,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS orders (
+    id          INT            NOT NULL AUTO_INCREMENT,
+    usuario_id  INT            NOT NULL,
+    estado      VARCHAR(50)    NOT NULL,
+    total       DECIMAL(10,2)  NOT NULL,
+    created_at  DATETIME,
+    updated_at  DATETIME,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS order_item (
+    id          INT           NOT NULL AUTO_INCREMENT,
+    order_id    INT           NOT NULL,
+    product_id  INT           NOT NULL,
+    cantidad    INT           NOT NULL,
+    subtotal    DECIMAL(10,2) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_orderitem_order   FOREIGN KEY (order_id)   REFERENCES orders (id),
+    CONSTRAINT fk_orderitem_product FOREIGN KEY (product_id) REFERENCES product (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -------------------------------------------------------------------------
+-- Configuración
+-- -------------------------------------------------------------------------
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES ('minimum_stock', '5');
+
+-- -------------------------------------------------------------------------
+-- Datos de ejemplo
+-- -------------------------------------------------------------------------
 
 TRUNCATE TABLE product;
 

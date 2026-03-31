@@ -31,6 +31,7 @@ public class Order {
     @Column(name = "estado")
     private OrderStatus status;
 
+    @Column(name = "total")
     private BigDecimal total;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

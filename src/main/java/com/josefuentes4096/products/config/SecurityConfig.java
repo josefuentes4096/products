@@ -10,6 +10,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // DESARROLLO: CSRF deshabilitado para API REST stateless; todos los endpoints son públicos.
+    // En producción reemplazar .permitAll() por reglas de autorización por rol.
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http

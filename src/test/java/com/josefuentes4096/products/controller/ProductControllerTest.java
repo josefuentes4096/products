@@ -7,7 +7,6 @@ import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -22,6 +21,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -29,7 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ProductController.class)
 @WithMockUser
-@TestPropertySource(properties = "products.low-stock.threshold=5")
 class ProductControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -342,8 +341,8 @@ class ProductControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void GET_findLowStock_usaDefault5YRetornaAmplificadoresConBajoStock() throws Exception {
-        when(service.findLowStock(eq(5), any(Pageable.class)))
+    void GET_findLowStock_sinParametroDelegaAlServicioConNull() throws Exception {
+        when(service.findLowStock(isNull(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(marshallResponse())));
 
         mockMvc.perform(get("/api/products/low-stock"))
@@ -351,7 +350,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.content[0].name").value("Marshall DSL40CR"))
                 .andExpect(jsonPath("$.content[0].stock").value(3));
 
-        verify(service).findLowStock(eq(5), any(Pageable.class));
+        verify(service).findLowStock(isNull(), any(Pageable.class));
     }
 
     @Test
@@ -372,7 +371,7 @@ class ProductControllerTest {
 
     @Test
     void GET_findLowStock_retornaListaVaciaSiTodosLosInstrumentosTienenStock() throws Exception {
-        when(service.findLowStock(eq(5), any(Pageable.class))).thenReturn(Page.empty());
+        when(service.findLowStock(isNull(), any(Pageable.class))).thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/products/low-stock"))
                 .andExpect(status().isOk())

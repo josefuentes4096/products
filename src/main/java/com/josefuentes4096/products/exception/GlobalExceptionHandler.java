@@ -6,9 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -32,5 +35,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleStock(InsufficientStockException ex) {
         return ResponseEntity.badRequest()
                 .body(new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDTO> handleGeneric(Exception ex) {
+        log.error("Error inesperado: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error interno del servidor"));
     }
 }
