@@ -26,6 +26,7 @@ public class OrderItem {
     @Column(name = "cantidad")
     private Integer quantity;
 
+    @Column(name = "subtotal")
     private BigDecimal subtotal;
 
     @Override

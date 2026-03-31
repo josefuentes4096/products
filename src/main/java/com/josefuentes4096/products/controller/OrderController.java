@@ -5,11 +5,12 @@ import com.josefuentes4096.products.dto.OrderResponseDTO;
 import com.josefuentes4096.products.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ResponseStatus;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -25,7 +26,9 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    public List<OrderResponseDTO> getHistory(@PathVariable Integer userId) {
-        return service.getOrderHistory(userId);
+    public Page<OrderResponseDTO> getHistory(
+            @PathVariable Integer userId,
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+        return service.getOrderHistory(userId, pageable);
     }
 }

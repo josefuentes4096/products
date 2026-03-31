@@ -14,6 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,11 +79,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponseDTO> getOrderHistory(Integer userId) {
+    public Page<OrderResponseDTO> getOrderHistory(Integer userId, Pageable pageable) {
         log.debug("Consultando historial de pedidos para usuario: {}", userId);
-        return orderRepository.findByUserId(userId)
-                .stream()
-                .map(mapper::toDTO)
-                .toList();
+        return orderRepository.findByUserId(userId, pageable).map(mapper::toDTO);
     }
 }

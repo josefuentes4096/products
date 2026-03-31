@@ -20,6 +20,11 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -262,6 +267,42 @@ class OrderServiceTest {
 
         verify(productService).decreaseStock(3, 1);
         verify(productService).decreaseStock(4, 1);
+    }
+
+    // -------------------------------------------------------------------------
+    // getOrderHistory
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getOrderHistory_retornaHistorialDePedidosDelUsuario() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Order order1 = savedOrder(1, 7, 3000.00);
+        Order order2 = savedOrder(2, 7, 240.00);
+        when(orderRepository.findByUserId(7, pageable))
+                .thenReturn(new PageImpl<>(List.of(order1, order2)));
+
+        Page<OrderResponseDTO> resultado = service.getOrderHistory(7, pageable);
+
+        assertThat(resultado.getContent()).hasSize(2);
+        assertThat(resultado.getContent()).extracting(OrderResponseDTO::getUserId).containsOnly(7);
+    }
+
+    @Test
+    void getOrderHistory_retornaListaVaciaParaUsuarioSinPedidos() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(orderRepository.findByUserId(99, pageable)).thenReturn(Page.empty());
+
+        assertThat(service.getOrderHistory(99, pageable).getContent()).isEmpty();
+    }
+
+    @Test
+    void getOrderHistory_delegaAlRepositorioConLaPaginacionRecibida() {
+        Pageable pageable = PageRequest.of(1, 5);
+        when(orderRepository.findByUserId(3, pageable)).thenReturn(Page.empty());
+
+        service.getOrderHistory(3, pageable);
+
+        verify(orderRepository).findByUserId(3, pageable);
     }
 
     @Test

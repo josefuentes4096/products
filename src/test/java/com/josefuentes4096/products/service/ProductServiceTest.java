@@ -3,11 +3,11 @@ package com.josefuentes4096.products.service;
 import com.josefuentes4096.products.dto.ProductRequestDTO;
 import com.josefuentes4096.products.dto.ProductResponseDTO;
 import com.josefuentes4096.products.entity.Product;
-import com.josefuentes4096.products.entity.Setting;
+import com.josefuentes4096.products.exception.InsufficientStockException;
 import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.mapper.ProductMapper;
 import com.josefuentes4096.products.repository.ProductRepository;
-import com.josefuentes4096.products.repository.SettingRepository;
+import com.josefuentes4096.products.service.SettingService;
 import com.josefuentes4096.products.service.impl.ProductServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,8 +24,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -37,7 +35,7 @@ class ProductServiceTest {
     private ProductRepository repository;
 
     @Mock
-    private SettingRepository settingRepository;
+    private SettingService settingService;
 
     @Spy
     private ProductMapper mapper = new ProductMapper();
@@ -50,7 +48,7 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ProductServiceImpl(repository, mapper, settingRepository);
+        service = new ProductServiceImpl(repository, mapper, settingService);
 
         stratocaster = new Product(1, "Fender Stratocaster American Pro II",
                 "Guitarra eléctrica de cuerpo sólido con pastillas V-Mod II",
@@ -350,8 +348,7 @@ class ProductServiceTest {
     @Test
     void findLowStock_usaUmbralDeBDCuandoMinEsNull() {
         Pageable pageable = PageRequest.of(0, 10);
-        when(settingRepository.findByKey("minimum_stock"))
-                .thenReturn(Optional.of(new Setting(1, "minimum_stock", "5")));
+        when(settingService.getMinimumStock()).thenReturn(5);
         when(repository.findByStockLessThanEqual(5, pageable))
                 .thenReturn(new PageImpl<>(List.of(marshallDsl40)));
 
@@ -359,19 +356,18 @@ class ProductServiceTest {
 
         assertThat(resultado.getContent()).hasSize(1);
         verify(repository).findByStockLessThanEqual(5, pageable);
+        verify(settingService).getMinimumStock();
     }
 
     @Test
-    void findLowStock_usaFallbackCuandoNoExisteConfiguracion() {
+    void findLowStock_ignoraSettingServiceCuandoMinEsExplicito() {
         Pageable pageable = PageRequest.of(0, 10);
-        when(settingRepository.findByKey("minimum_stock")).thenReturn(Optional.empty());
-        when(repository.findByStockLessThanEqual(5, pageable))
+        when(repository.findByStockLessThanEqual(3, pageable))
                 .thenReturn(new PageImpl<>(List.of(marshallDsl40)));
 
-        Page<ProductResponseDTO> resultado = service.findLowStock(null, pageable);
+        service.findLowStock(3, pageable);
 
-        assertThat(resultado.getContent()).hasSize(1);
-        verify(repository).findByStockLessThanEqual(5, pageable);
+        verifyNoInteractions(settingService);
     }
 
     @Test
@@ -385,5 +381,53 @@ class ProductServiceTest {
         assertThat(resultado.getContent()).hasSize(1);
         assertThat(resultado.getContent().get(0).getName()).isEqualTo("Marshall DSL40CR");
         verify(repository).findByStockLessThanEqual(3, pageable);
+    }
+
+    // -------------------------------------------------------------------------
+    // decreaseStock
+    // -------------------------------------------------------------------------
+
+    @Test
+    void decreaseStock_reduceStockDeLaGuitarraCorrectamente() {
+        when(repository.findById(1)).thenReturn(Optional.of(stratocaster));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ProductResponseDTO resultado = service.decreaseStock(1, 3);
+
+        assertThat(resultado.getStock()).isEqualTo(5); // 8 - 3
+        verify(repository).save(any(Product.class));
+    }
+
+    @Test
+    void decreaseStock_reduceStockDelPedalCorrectamente() {
+        when(repository.findById(2)).thenReturn(Optional.of(tubeScreamer));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ProductResponseDTO resultado = service.decreaseStock(2, 10);
+
+        assertThat(resultado.getName()).isEqualTo("Ibanez Tube Screamer TS9");
+        assertThat(resultado.getStock()).isEqualTo(5); // 15 - 10
+    }
+
+    @Test
+    void decreaseStock_lanzaExcepcionSiStockInsuficiente() {
+        when(repository.findById(3)).thenReturn(Optional.of(marshallDsl40));
+
+        assertThatThrownBy(() -> service.decreaseStock(3, 5))
+                .isInstanceOf(InsufficientStockException.class)
+                .hasMessageContaining("Marshall DSL40CR");
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void decreaseStock_lanzaExcepcionSiProductoNoExiste() {
+        when(repository.findById(99)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.decreaseStock(99, 1))
+                .isInstanceOf(ProductNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(repository, never()).save(any());
     }
 }

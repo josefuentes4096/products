@@ -231,6 +231,32 @@ class ProductControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void POST_create_retorna400SiPrecioEsNull() throws Exception {
+        ProductRequestDTO request = new ProductRequestDTO();
+        request.setName("Gibson SG Standard");
+        request.setStock(4);
+        // price no se setea → null
+
+        mockMvc.perform(post("/api/products").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void POST_create_retorna400SiStockEsNull() throws Exception {
+        ProductRequestDTO request = new ProductRequestDTO();
+        request.setName("Fender Jazz Bass");
+        request.setPrice(BigDecimal.valueOf(1300.00));
+        // stock no se setea → null
+
+        mockMvc.perform(post("/api/products").with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
     // -------------------------------------------------------------------------
     // PUT /api/products/{id}
     // -------------------------------------------------------------------------
@@ -298,6 +324,16 @@ class ProductControllerTest {
                 .param("name", "Fender Stratocaster American Pro II"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Fender Stratocaster American Pro II"));
+    }
+
+    @Test
+    void GET_findByName_retorna404SiInstrumentoNoExistePorNombre() throws Exception {
+        when(service.findByName("Gibson Les Paul Custom"))
+                .thenThrow(new ProductNotFoundException("Gibson Les Paul Custom"));
+
+        mockMvc.perform(get("/api/products/search")
+                .param("name", "Gibson Les Paul Custom"))
+                .andExpect(status().isNotFound());
     }
 
     // -------------------------------------------------------------------------

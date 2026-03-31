@@ -7,8 +7,8 @@ import com.josefuentes4096.products.exception.InsufficientStockException;
 import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.mapper.ProductMapper;
 import com.josefuentes4096.products.repository.ProductRepository;
-import com.josefuentes4096.products.repository.SettingRepository;
 import com.josefuentes4096.products.service.ProductService;
+import com.josefuentes4096.products.service.SettingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,12 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-    private static final String MINIMUM_STOCK_KEY = "minimum_stock";
-    private static final int MINIMUM_STOCK_FALLBACK = 5;
-
     private final ProductRepository repository;
     private final ProductMapper mapper;
-    private final SettingRepository settingRepository;
+    private final SettingService settingService;
 
     @Override
     @Transactional(readOnly = true)
@@ -110,26 +107,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponseDTO> findLowStock(Integer min, Pageable pageable) {
-        int threshold = min != null ? min : getMinimumStock();
+        int threshold = min != null ? min : settingService.getMinimumStock();
         log.debug("Buscando productos con stock <= {}", threshold);
         return repository.findByStockLessThanEqual(threshold, pageable).map(mapper::toDTO);
-    }
-
-    private int getMinimumStock() {
-        return settingRepository.findByKey(MINIMUM_STOCK_KEY)
-                .map(s -> {
-                    try {
-                        return Integer.parseInt(s.getValue());
-                    } catch (NumberFormatException e) {
-                        log.warn("Valor inválido para '{}': '{}'. Usando fallback {}",
-                                MINIMUM_STOCK_KEY, s.getValue(), MINIMUM_STOCK_FALLBACK);
-                        return MINIMUM_STOCK_FALLBACK;
-                    }
-                })
-                .orElseGet(() -> {
-                    log.warn("Configuración '{}' no encontrada. Usando fallback {}", MINIMUM_STOCK_KEY, MINIMUM_STOCK_FALLBACK);
-                    return MINIMUM_STOCK_FALLBACK;
-                });
     }
 
     @Override

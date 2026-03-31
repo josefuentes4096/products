@@ -2,12 +2,12 @@ package com.josefuentes4096.products.service;
 
 import com.josefuentes4096.products.dto.OrderRequestDTO;
 import com.josefuentes4096.products.dto.OrderResponseDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
 
     OrderResponseDTO createOrder(OrderRequestDTO request);
 
-    List<OrderResponseDTO> getOrderHistory(Integer userId);
+    Page<OrderResponseDTO> getOrderHistory(Integer userId, Pageable pageable);
 }
