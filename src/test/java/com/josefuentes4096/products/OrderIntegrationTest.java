@@ -5,20 +5,29 @@ import com.josefuentes4096.products.dto.OrderItemRequestDTO;
 import com.josefuentes4096.products.dto.OrderRequestDTO;
 import com.josefuentes4096.products.entity.Product;
 import com.josefuentes4096.products.entity.Setting;
+import com.josefuentes4096.products.exception.InsufficientStockException;
 import com.josefuentes4096.products.repository.OrderRepository;
 import com.josefuentes4096.products.repository.ProductRepository;
 import com.josefuentes4096.products.repository.SettingRepository;
+import com.josefuentes4096.products.service.ProductService;
+import com.josefuentes4096.products.service.SettingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -33,6 +42,9 @@ class OrderIntegrationTest {
     @Autowired ProductRepository productRepository;
     @Autowired OrderRepository orderRepository;
     @Autowired SettingRepository settingRepository;
+    @Autowired ProductService productService;
+    @Autowired SettingService settingService;
+    @Autowired CacheManager cacheManager;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -42,6 +54,7 @@ class OrderIntegrationTest {
         productRepository.deleteAll();
         settingRepository.deleteAll();
         settingRepository.save(new Setting(null, "minimum_stock", "5"));
+        cacheManager.getCache(SettingService.MINIMUM_STOCK_CACHE).clear();
     }
 
     // -------------------------------------------------------------------------
@@ -182,10 +195,105 @@ class OrderIntegrationTest {
     // Historial vacío
     // -------------------------------------------------------------------------
 
+    // -------------------------------------------------------------------------
+    // Rollback parcial: si un ítem falla, ningún stock debe haberse modificado
+    // -------------------------------------------------------------------------
+
+    @Test
+    void crearPedido_rollbackTotalSiSegundoItemTieneStockInsuficiente() throws Exception {
+        Product strat = savedProduct("Fender Stratocaster", 1500.00, "Guitarras", 5);
+        Product vox   = savedProduct("Vox AC30",           2200.00, "Amplificadores", 1);
+
+        // El Vox tiene stock=1 pero pedimos 3 → falla en el segundo ítem
+        OrderItemRequestDTO item1 = new OrderItemRequestDTO();
+        item1.setProductId(strat.getId());
+        item1.setQuantity(2);
+
+        OrderItemRequestDTO item2 = new OrderItemRequestDTO();
+        item2.setProductId(vox.getId());
+        item2.setQuantity(3);
+
+        OrderRequestDTO request = new OrderRequestDTO();
+        request.setUserId(1);
+        request.setItems(List.of(item1, item2));
+
+        mockMvc.perform(post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        // Ningún stock debe haberse modificado (rollback completo)
+        assertThat(productRepository.findById(strat.getId()).orElseThrow().getStock()).isEqualTo(5);
+        assertThat(productRepository.findById(vox.getId()).orElseThrow().getStock()).isEqualTo(1);
+        assertThat(orderRepository.count()).isZero();
+    }
+
+    // -------------------------------------------------------------------------
+    // Concurrencia: el bloqueo pesimista evita stock negativo
+    // -------------------------------------------------------------------------
+
+    @Test
+    void decreaseStock_conAccesoConcurrenteNoProduceStockNegativo() throws InterruptedException {
+        Product product = savedProduct("Gibson Les Paul", 2500.00, "Guitarras", 5);
+        int productId = product.getId();
+
+        int totalHilos = 10; // 10 intentos simultáneos, solo 5 deben tener éxito
+        CountDownLatch inicio = new CountDownLatch(1);
+        CountDownLatch fin    = new CountDownLatch(totalHilos);
+        AtomicInteger exitos  = new AtomicInteger(0);
+        AtomicInteger fallos  = new AtomicInteger(0);
+
+        ExecutorService executor = Executors.newFixedThreadPool(totalHilos);
+        for (int i = 0; i < totalHilos; i++) {
+            executor.submit(() -> {
+                try {
+                    inicio.await();
+                    productService.decreaseStock(productId, 1);
+                    exitos.incrementAndGet();
+                } catch (InsufficientStockException e) {
+                    fallos.incrementAndGet();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    fin.countDown();
+                }
+            });
+        }
+
+        inicio.countDown(); // lanzar todos los hilos al mismo tiempo
+        assertThat(fin.await(15, TimeUnit.SECONDS)).isTrue();
+        executor.shutdown();
+
+        assertThat(exitos.get()).isEqualTo(5);
+        assertThat(fallos.get()).isEqualTo(5);
+        assertThat(productRepository.findById(productId).orElseThrow().getStock()).isEqualTo(0);
+    }
+
+    // -------------------------------------------------------------------------
+    // Historial vacío
+    // -------------------------------------------------------------------------
+
     @Test
     void getHistory_retornaListaVaciaParaUsuarioSinPedidos() throws Exception {
         mockMvc.perform(get("/api/orders/user/999"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    // -------------------------------------------------------------------------
+    // Cache: el valor se sirve desde caché tras la primera consulta
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getMinimumStock_sirveValorDesdeCacheTrasPrimeraConsulta() {
+        // Primera llamada → consulta la BD (minimum_stock=5)
+        assertThat(settingService.getMinimumStock()).isEqualTo(5);
+
+        // Modificamos el valor en BD sin limpiar el caché
+        settingRepository.deleteAll();
+        settingRepository.save(new Setting(null, "minimum_stock", "99"));
+
+        // Segunda llamada → debe devolver el valor cacheado (5), no el nuevo (99)
+        assertThat(settingService.getMinimumStock()).isEqualTo(5);
     }
 }

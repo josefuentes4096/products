@@ -116,7 +116,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponseDTO decreaseStock(Integer productId, Integer quantity) {
         log.info("Descontando {} unidades del producto id: {}", quantity, productId);
-        Product product = repository.findById(productId)
+        Product product = repository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         if (product.getStock() < quantity) {

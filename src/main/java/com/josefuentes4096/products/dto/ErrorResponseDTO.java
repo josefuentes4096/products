@@ -9,10 +9,10 @@ import java.util.Map;
 @AllArgsConstructor
 public class ErrorResponseDTO {
     private int status;
-    private String mensaje;
-    private Map<String, String> errores;
+    private String message;
+    private Map<String, String> errors;
 
-    public ErrorResponseDTO(int status, String mensaje) {
-        this(status, mensaje, null);
+    public ErrorResponseDTO(int status, String message) {
+        this(status, message, null);
     }
 }

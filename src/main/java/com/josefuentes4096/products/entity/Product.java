@@ -36,6 +36,7 @@ public class Product {
     @Column(name = "imagen_url")
     private String imageUrl;
 
+    @Column(name = "stock")
     private Integer stock;
 
     @CreatedDate

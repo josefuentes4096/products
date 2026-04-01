@@ -389,7 +389,7 @@ class ProductServiceTest {
 
     @Test
     void decreaseStock_reduceStockDeLaGuitarraCorrectamente() {
-        when(repository.findById(1)).thenReturn(Optional.of(stratocaster));
+        when(repository.findByIdForUpdate(1)).thenReturn(Optional.of(stratocaster));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ProductResponseDTO resultado = service.decreaseStock(1, 3);
@@ -400,7 +400,7 @@ class ProductServiceTest {
 
     @Test
     void decreaseStock_reduceStockDelPedalCorrectamente() {
-        when(repository.findById(2)).thenReturn(Optional.of(tubeScreamer));
+        when(repository.findByIdForUpdate(2)).thenReturn(Optional.of(tubeScreamer));
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ProductResponseDTO resultado = service.decreaseStock(2, 10);
@@ -410,8 +410,20 @@ class ProductServiceTest {
     }
 
     @Test
+    void decreaseStock_agotaStockCuandoSePideExactamenteLaCantidadDisponible() {
+        // Marshall stock=3, se piden exactamente 3 → stock queda en 0, sin excepción
+        when(repository.findByIdForUpdate(3)).thenReturn(Optional.of(marshallDsl40));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ProductResponseDTO resultado = service.decreaseStock(3, 3);
+
+        assertThat(resultado.getStock()).isEqualTo(0);
+        verify(repository).save(any(Product.class));
+    }
+
+    @Test
     void decreaseStock_lanzaExcepcionSiStockInsuficiente() {
-        when(repository.findById(3)).thenReturn(Optional.of(marshallDsl40));
+        when(repository.findByIdForUpdate(3)).thenReturn(Optional.of(marshallDsl40));
 
         assertThatThrownBy(() -> service.decreaseStock(3, 5))
                 .isInstanceOf(InsufficientStockException.class)
@@ -422,7 +434,7 @@ class ProductServiceTest {
 
     @Test
     void decreaseStock_lanzaExcepcionSiProductoNoExiste() {
-        when(repository.findById(99)).thenReturn(Optional.empty());
+        when(repository.findByIdForUpdate(99)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.decreaseStock(99, 1))
                 .isInstanceOf(ProductNotFoundException.class)

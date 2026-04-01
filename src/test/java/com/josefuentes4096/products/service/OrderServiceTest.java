@@ -328,5 +328,14 @@ class OrderServiceTest {
 
         assertThat(resultado.getOrderId()).isEqualTo(22);
         assertThat(resultado.getTotal()).isEqualByComparingTo(BigDecimal.valueOf(1900.00));
+        assertThat(resultado.getItems()).hasSize(2);
+        // Subtotal guitarra: 1 × $1500 = $1500
+        assertThat(resultado.getItems().get(0).getSubtotal())
+                .isEqualByComparingTo(BigDecimal.valueOf(1500.00));
+        // Subtotal pedal: 5 × $80 = $400
+        assertThat(resultado.getItems().get(1).getSubtotal())
+                .isEqualByComparingTo(BigDecimal.valueOf(400.00));
+        assertThat(resultado.getItems().get(0).getName()).isEqualTo("Fender Stratocaster American Pro II");
+        assertThat(resultado.getItems().get(1).getName()).isEqualTo("Boss DS-1 Distortion");
     }
 }

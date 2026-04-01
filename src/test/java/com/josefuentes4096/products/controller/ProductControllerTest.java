@@ -86,6 +86,14 @@ class ProductControllerTest {
     }
 
     @Test
+    void GET_findAll_retorna500SiOcurreErrorInesperado() throws Exception {
+        when(service.findAll(any(Pageable.class))).thenThrow(new RuntimeException("Error inesperado"));
+
+        mockMvc.perform(get("/api/products"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
     void GET_findAll_retorna200ConListaVaciaSiNoHayInstrumentos() throws Exception {
         when(service.findAll(any(Pageable.class))).thenReturn(Page.empty());
 
@@ -133,7 +141,7 @@ class ProductControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void POST_create_retorna200AlCrearAmplificadorValvular() throws Exception {
+    void POST_create_retorna201AlCrearAmplificadorValvular() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Vox AC30");
         request.setDescription("Amplificador valvular 30W icono del sonido británico");
@@ -147,8 +155,7 @@ class ProductControllerTest {
                 BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 2);
         when(service.save(any())).thenReturn(response);
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Vox AC30"))
@@ -171,8 +178,7 @@ class ProductControllerTest {
                 BigDecimal.valueOf(80.00), "Pedales", "boss_ds1.jpg", 25);
         when(service.save(any())).thenReturn(response);
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Boss DS-1 Distortion"))
@@ -183,11 +189,11 @@ class ProductControllerTest {
     void POST_create_retorna400SiNombreDeInstrumentoEsBlanco() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("");
+        request.setDescription("Descripción de prueba con más de 10 caracteres");
         request.setPrice(BigDecimal.valueOf(500.00));
         request.setStock(3);
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -196,11 +202,11 @@ class ProductControllerTest {
     void POST_create_retorna400SiPrecioEsCero() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Gibson Les Paul Standard");
+        request.setDescription("Descripción de prueba con más de 10 caracteres");
         request.setPrice(BigDecimal.ZERO);
         request.setStock(1);
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -209,11 +215,11 @@ class ProductControllerTest {
     void POST_create_retorna400SiPrecioEsNegativo() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Pedal genérico");
+        request.setDescription("Descripción de prueba con más de 10 caracteres");
         request.setPrice(BigDecimal.valueOf(-50.0));
         request.setStock(5);
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -222,11 +228,11 @@ class ProductControllerTest {
     void POST_create_retorna400SiStockEsNegativo() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Fender Telecaster");
+        request.setDescription("Descripción de prueba con más de 10 caracteres");
         request.setPrice(BigDecimal.valueOf(1100.00));
         request.setStock(-1);
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -235,11 +241,11 @@ class ProductControllerTest {
     void POST_create_retorna400SiPrecioEsNull() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Gibson SG Standard");
+        request.setDescription("Descripción de prueba con más de 10 caracteres");
         request.setStock(4);
         // price no se setea → null
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -248,11 +254,11 @@ class ProductControllerTest {
     void POST_create_retorna400SiStockEsNull() throws Exception {
         ProductRequestDTO request = new ProductRequestDTO();
         request.setName("Fender Jazz Bass");
+        request.setDescription("Descripción de prueba con más de 10 caracteres");
         request.setPrice(BigDecimal.valueOf(1300.00));
         // stock no se setea → null
 
-        mockMvc.perform(post("/api/products").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -272,8 +278,7 @@ class ProductControllerTest {
                 BigDecimal.valueOf(1650.00), "Guitarras", "fender_strat.jpg", 8);
         when(service.update(eq(1), any())).thenReturn(response);
 
-        mockMvc.perform(put("/api/products/1").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/products/1").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.price").value(1650.00));
@@ -283,8 +288,7 @@ class ProductControllerTest {
     void PUT_update_retorna404SiInstrumentoNoExiste() throws Exception {
         when(service.update(eq(99), any())).thenThrow(new ProductNotFoundException(99));
 
-        mockMvc.perform(put("/api/products/99").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/products/99").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stratocasterRequest())))
                 .andExpect(status().isNotFound());
     }

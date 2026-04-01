@@ -28,8 +28,10 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductService productService;
-    // ProductRepository se usa únicamente para obtener la referencia JPA al construir OrderItem.
-    // Toda la lógica de negocio sobre productos (validación y descuento de stock) se delega a ProductService.
+    // ProductRepository se usa exclusivamente para obtener un proxy JPA (getReferenceById) al vincular
+    // OrderItem con Product sin cargar la entidad completa. El acceso es seguro porque ocurre dentro de
+    // la misma transacción de createOrder. Toda la lógica de negocio (validación y descuento de stock)
+    // se delega a ProductService, respetando SRP y DIP.
     private final ProductRepository productRepository;
     private final OrderMapper mapper;
 

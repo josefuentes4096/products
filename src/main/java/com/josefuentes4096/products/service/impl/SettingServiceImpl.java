@@ -19,7 +19,7 @@ public class SettingServiceImpl implements SettingService {
     private final SettingRepository settingRepository;
 
     @Override
-    @Cacheable("minimum_stock")
+    @Cacheable(SettingService.MINIMUM_STOCK_CACHE)
     @Transactional(readOnly = true)
     public int getMinimumStock() {
         return settingRepository.findByKey(MINIMUM_STOCK_KEY)

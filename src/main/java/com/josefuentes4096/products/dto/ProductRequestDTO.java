@@ -15,6 +15,7 @@ public class ProductRequestDTO {
     @NotBlank(message = "El nombre es obligatorio")
     private String name;
 
+    @NotBlank(message = "La descripción es obligatoria")
     @Size(min = 10, message = "La descripción debe tener al menos 10 caracteres")
     private String description;
 
