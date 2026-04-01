@@ -58,14 +58,14 @@ class OrderControllerTest {
     }
 
     // -------------------------------------------------------------------------
-    // POST /api/orders
+    // POST /api/v1/orders
     // -------------------------------------------------------------------------
 
     @Test
     void POST_create_retorna201AlCrearPedidoDeGuitarra() throws Exception {
         when(service.createOrder(any())).thenReturn(buildResponse(10, 7, 3000.00));
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(buildRequest(7, 1, 2))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderId").value(10))
@@ -90,7 +90,7 @@ class OrderControllerTest {
         request.setUserId(3);
         request.setItems(List.of(item1, item2));
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.total").value(1660.00));
@@ -101,7 +101,7 @@ class OrderControllerTest {
         when(service.createOrder(any()))
                 .thenThrow(new InsufficientStockException("Fender Stratocaster American Pro II"));
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(buildRequest(1, 1, 100))))
                 .andExpect(status().isBadRequest());
     }
@@ -110,7 +110,7 @@ class OrderControllerTest {
     void POST_create_retorna404SiElProductoNoExiste() throws Exception {
         when(service.createOrder(any())).thenThrow(new ProductNotFoundException(99));
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(buildRequest(1, 99, 1))))
                 .andExpect(status().isNotFound());
     }
@@ -120,7 +120,7 @@ class OrderControllerTest {
         OrderRequestDTO request = buildRequest(1, 1, 1);
         request.setUserId(null);
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -131,7 +131,7 @@ class OrderControllerTest {
         request.setUserId(1);
         request.setItems(List.of());
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -146,7 +146,7 @@ class OrderControllerTest {
         request.setUserId(1);
         request.setItems(List.of(item));
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -161,7 +161,7 @@ class OrderControllerTest {
         request.setUserId(1);
         request.setItems(List.of(item));
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -176,13 +176,13 @@ class OrderControllerTest {
         request.setUserId(1);
         request.setItems(List.of(item));
 
-        mockMvc.perform(post("/api/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/orders").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/orders/user/{userId}
+    // GET /api/v1/orders/user/{userId}
     // -------------------------------------------------------------------------
 
     @Test
@@ -191,7 +191,7 @@ class OrderControllerTest {
                 .thenReturn(new PageImpl<>(List.of(buildResponse(1, 7, 3000.00),
                         buildResponse(2, 7, 240.00))));
 
-        mockMvc.perform(get("/api/orders/user/7"))
+        mockMvc.perform(get("/api/v1/orders/user/7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].orderId").value(1))
@@ -202,7 +202,7 @@ class OrderControllerTest {
     void GET_getHistory_retornaListaVaciaSiUsuarioSinPedidos() throws Exception {
         when(service.getOrderHistory(eq(99), any(Pageable.class))).thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/orders/user/99"))
+        mockMvc.perform(get("/api/v1/orders/user/99"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
     }

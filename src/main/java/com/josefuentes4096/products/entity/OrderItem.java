@@ -27,6 +27,9 @@ public class OrderItem {
     @Column(name = "cantidad")
     private Integer quantity;
 
+    @Column(name = "unit_price")
+    private BigDecimal unitPrice;
+
     @Column(name = "subtotal")
     private BigDecimal subtotal;
 
@@ -44,6 +47,6 @@ public class OrderItem {
 
     @Override
     public String toString() {
-        return "OrderItem{id=" + id + ", quantity=" + quantity + ", subtotal=" + subtotal + "}";
+        return "OrderItem{id=" + id + ", quantity=" + quantity + ", unitPrice=" + unitPrice + ", subtotal=" + subtotal + "}";
     }
 }

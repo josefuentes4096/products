@@ -8,7 +8,6 @@ import com.josefuentes4096.products.exception.InsufficientStockException;
 import com.josefuentes4096.products.exception.ProductNotFoundException;
 import com.josefuentes4096.products.mapper.OrderMapper;
 import com.josefuentes4096.products.repository.OrderRepository;
-import com.josefuentes4096.products.repository.ProductRepository;
 import com.josefuentes4096.products.service.impl.OrderServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -19,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -36,7 +36,7 @@ class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private ProductService productService;
-    @Mock private ProductRepository productRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Spy private OrderMapper mapper = new OrderMapper();
 
     @InjectMocks
@@ -330,9 +330,13 @@ class OrderServiceTest {
         assertThat(resultado.getTotal()).isEqualByComparingTo(BigDecimal.valueOf(1900.00));
         assertThat(resultado.getItems()).hasSize(2);
         // Subtotal guitarra: 1 × $1500 = $1500
+        assertThat(resultado.getItems().get(0).getUnitPrice())
+                .isEqualByComparingTo(BigDecimal.valueOf(1500.00));
         assertThat(resultado.getItems().get(0).getSubtotal())
                 .isEqualByComparingTo(BigDecimal.valueOf(1500.00));
         // Subtotal pedal: 5 × $80 = $400
+        assertThat(resultado.getItems().get(1).getUnitPrice())
+                .isEqualByComparingTo(BigDecimal.valueOf(80.00));
         assertThat(resultado.getItems().get(1).getSubtotal())
                 .isEqualByComparingTo(BigDecimal.valueOf(400.00));
         assertThat(resultado.getItems().get(0).getName()).isEqualTo("Fender Stratocaster American Pro II");

@@ -92,7 +92,7 @@ class OrderIntegrationTest {
         Product boss  = savedProduct("Boss DS-1",           80.00,   "Pedales",   20);
 
         // 1 Strat ($1500) + 2 Boss DS-1 ($160) = $1660
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/api/v1/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(7, List.of(item(strat.getId(), 1), item(boss.getId(), 2)))))
                 .andExpect(status().isCreated())
@@ -106,7 +106,7 @@ class OrderIntegrationTest {
         assertThat(productRepository.findById(boss.getId()).orElseThrow().getStock()).isEqualTo(18);
 
         // Historial incluye el pedido con nombre e items (ejercita OrderMapper.toItemDTO)
-        mockMvc.perform(get("/api/orders/user/7"))
+        mockMvc.perform(get("/api/v1/orders/user/7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].total").value(1660.00))
@@ -119,7 +119,7 @@ class OrderIntegrationTest {
         Product marshall = savedProduct("Marshall DSL40CR", 1200.00, "Amplificadores", 5);
 
         // 2 Marshall x $1200 = $2400
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/api/v1/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(3, List.of(item(marshall.getId(), 2)))))
                 .andExpect(status().isCreated())
@@ -138,7 +138,7 @@ class OrderIntegrationTest {
     void crearPedido_retorna400YNoModificaStockSiNoHayUnidades() throws Exception {
         Product vox = savedProduct("Vox AC30", 2200.00, "Amplificadores", 1);
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/api/v1/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(1, List.of(item(vox.getId(), 5)))))
                 .andExpect(status().isBadRequest());
@@ -154,7 +154,7 @@ class OrderIntegrationTest {
 
     @Test
     void crearPedido_retorna404SiElProductoNoExiste() throws Exception {
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/api/v1/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(1, List.of(item(9999, 1)))))
                 .andExpect(status().isNotFound());
@@ -173,7 +173,7 @@ class OrderIntegrationTest {
         savedProduct("Fender Strat",     1500.00, "Guitarras",      10); // stock OK
 
         // Sin parámetro → usa minimum_stock=5 de la tabla settings
-        mockMvc.perform(get("/api/products/low-stock"))
+        mockMvc.perform(get("/api/v1/products/low-stock"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2));
     }
@@ -185,7 +185,7 @@ class OrderIntegrationTest {
         savedProduct("Fender Strat",     1500.00, "Guitarras",      10);
 
         // Con min=2 → solo el Vox (stock=1) cumple
-        mockMvc.perform(get("/api/products/low-stock").param("min", "2"))
+        mockMvc.perform(get("/api/v1/products/low-stock").param("min", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("Vox AC30"));
@@ -217,7 +217,7 @@ class OrderIntegrationTest {
         request.setUserId(1);
         request.setItems(List.of(item1, item2));
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/api/v1/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -275,7 +275,7 @@ class OrderIntegrationTest {
 
     @Test
     void getHistory_retornaListaVaciaParaUsuarioSinPedidos() throws Exception {
-        mockMvc.perform(get("/api/orders/user/999"))
+        mockMvc.perform(get("/api/v1/orders/user/999"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
     }

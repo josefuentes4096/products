@@ -33,6 +33,7 @@ public class OrderMapper {
                 item.getProduct().getId(),
                 item.getProduct().getName(),
                 item.getQuantity(),
+                item.getUnitPrice(),
                 item.getSubtotal()
         );
     }

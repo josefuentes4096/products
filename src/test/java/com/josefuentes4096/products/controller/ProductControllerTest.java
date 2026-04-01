@@ -69,7 +69,7 @@ class ProductControllerTest {
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products
+    // GET /api/v1/products
     // -------------------------------------------------------------------------
 
     @Test
@@ -77,7 +77,7 @@ class ProductControllerTest {
         when(service.findAll(any(Pageable.class))).thenReturn(
                 new PageImpl<>(List.of(stratocasterResponse(), tubeScreamerResponse(), marshallResponse())));
 
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(3))
                 .andExpect(jsonPath("$.content[0].name").value("Fender Stratocaster American Pro II"))
@@ -89,7 +89,7 @@ class ProductControllerTest {
     void GET_findAll_retorna500SiOcurreErrorInesperado() throws Exception {
         when(service.findAll(any(Pageable.class))).thenThrow(new RuntimeException("Error inesperado"));
 
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -97,20 +97,20 @@ class ProductControllerTest {
     void GET_findAll_retorna200ConListaVaciaSiNoHayInstrumentos() throws Exception {
         when(service.findAll(any(Pageable.class))).thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products/{id}
+    // GET /api/v1/products/{id}
     // -------------------------------------------------------------------------
 
     @Test
     void GET_findById_retorna200ConGuitarraCuandoExiste() throws Exception {
         when(service.findById(1)).thenReturn(stratocasterResponse());
 
-        mockMvc.perform(get("/api/products/1"))
+        mockMvc.perform(get("/api/v1/products/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Fender Stratocaster American Pro II"))
@@ -122,7 +122,7 @@ class ProductControllerTest {
     void GET_findById_retorna200ConPedalCuandoExiste() throws Exception {
         when(service.findById(2)).thenReturn(tubeScreamerResponse());
 
-        mockMvc.perform(get("/api/products/2"))
+        mockMvc.perform(get("/api/v1/products/2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Ibanez Tube Screamer TS9"))
                 .andExpect(jsonPath("$.category").value("Pedales"));
@@ -132,12 +132,12 @@ class ProductControllerTest {
     void GET_findById_retorna404CuandoInstrumentoNoExiste() throws Exception {
         when(service.findById(99)).thenThrow(new ProductNotFoundException(99));
 
-        mockMvc.perform(get("/api/products/99"))
+        mockMvc.perform(get("/api/v1/products/99"))
                 .andExpect(status().isNotFound());
     }
 
     // -------------------------------------------------------------------------
-    // POST /api/products
+    // POST /api/v1/products
     // -------------------------------------------------------------------------
 
     @Test
@@ -155,7 +155,7 @@ class ProductControllerTest {
                 BigDecimal.valueOf(2200.00), "Amplificadores", "vox_ac30.jpg", 2);
         when(service.save(any())).thenReturn(response);
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Vox AC30"))
@@ -178,7 +178,7 @@ class ProductControllerTest {
                 BigDecimal.valueOf(80.00), "Pedales", "boss_ds1.jpg", 25);
         when(service.save(any())).thenReturn(response);
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Boss DS-1 Distortion"))
@@ -193,7 +193,7 @@ class ProductControllerTest {
         request.setPrice(BigDecimal.valueOf(500.00));
         request.setStock(3);
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -206,7 +206,7 @@ class ProductControllerTest {
         request.setPrice(BigDecimal.ZERO);
         request.setStock(1);
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -219,7 +219,7 @@ class ProductControllerTest {
         request.setPrice(BigDecimal.valueOf(-50.0));
         request.setStock(5);
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -232,7 +232,7 @@ class ProductControllerTest {
         request.setPrice(BigDecimal.valueOf(1100.00));
         request.setStock(-1);
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -245,7 +245,7 @@ class ProductControllerTest {
         request.setStock(4);
         // price no se setea → null
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
@@ -258,13 +258,13 @@ class ProductControllerTest {
         request.setPrice(BigDecimal.valueOf(1300.00));
         // stock no se setea → null
 
-        mockMvc.perform(post("/api/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/v1/products").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
     // -------------------------------------------------------------------------
-    // PUT /api/products/{id}
+    // PUT /api/v1/products/{id}
     // -------------------------------------------------------------------------
 
     @Test
@@ -278,7 +278,7 @@ class ProductControllerTest {
                 BigDecimal.valueOf(1650.00), "Guitarras", "fender_strat.jpg", 8);
         when(service.update(eq(1), any())).thenReturn(response);
 
-        mockMvc.perform(put("/api/products/1").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/v1/products/1").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.price").value(1650.00));
@@ -288,20 +288,20 @@ class ProductControllerTest {
     void PUT_update_retorna404SiInstrumentoNoExiste() throws Exception {
         when(service.update(eq(99), any())).thenThrow(new ProductNotFoundException(99));
 
-        mockMvc.perform(put("/api/products/99").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/v1/products/99").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(stratocasterRequest())))
                 .andExpect(status().isNotFound());
     }
 
     // -------------------------------------------------------------------------
-    // DELETE /api/products/{id}
+    // DELETE /api/v1/products/{id}
     // -------------------------------------------------------------------------
 
     @Test
     void DELETE_delete_retorna200AlEliminarPedal() throws Exception {
         doNothing().when(service).delete(2);
 
-        mockMvc.perform(delete("/api/products/2").with(csrf()))
+        mockMvc.perform(delete("/api/v1/products/2").with(csrf()))
                 .andExpect(status().isNoContent());
 
         verify(service).delete(2);
@@ -311,12 +311,12 @@ class ProductControllerTest {
     void DELETE_delete_retorna404SiAmplificadorNoExiste() throws Exception {
         doThrow(new ProductNotFoundException(99)).when(service).delete(99);
 
-        mockMvc.perform(delete("/api/products/99").with(csrf()))
+        mockMvc.perform(delete("/api/v1/products/99").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products/search
+    // GET /api/v1/products/search
     // -------------------------------------------------------------------------
 
     @Test
@@ -324,7 +324,7 @@ class ProductControllerTest {
         when(service.findByName("Fender Stratocaster American Pro II"))
                 .thenReturn(stratocasterResponse());
 
-        mockMvc.perform(get("/api/products/search")
+        mockMvc.perform(get("/api/v1/products/search")
                 .param("name", "Fender Stratocaster American Pro II"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Fender Stratocaster American Pro II"));
@@ -335,13 +335,13 @@ class ProductControllerTest {
         when(service.findByName("Gibson Les Paul Custom"))
                 .thenThrow(new ProductNotFoundException("Gibson Les Paul Custom"));
 
-        mockMvc.perform(get("/api/products/search")
+        mockMvc.perform(get("/api/v1/products/search")
                 .param("name", "Gibson Les Paul Custom"))
                 .andExpect(status().isNotFound());
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products/category/{category}
+    // GET /api/v1/products/category/{category}
     // -------------------------------------------------------------------------
 
     @Test
@@ -352,7 +352,7 @@ class ProductControllerTest {
         when(service.filterByCategory(eq("Amplificadores"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(marshallResponse(), voxResponse)));
 
-        mockMvc.perform(get("/api/products/category/Amplificadores"))
+        mockMvc.perform(get("/api/v1/products/category/Amplificadores"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].category").value("Amplificadores"))
@@ -369,7 +369,7 @@ class ProductControllerTest {
         when(service.filterByCategory(eq("Pedales"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(tubeScreamerResponse(), hallOfFameResponse)));
 
-        mockMvc.perform(get("/api/products/category/Pedales"))
+        mockMvc.perform(get("/api/v1/products/category/Pedales"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].name").value("Ibanez Tube Screamer TS9"))
@@ -377,7 +377,7 @@ class ProductControllerTest {
     }
 
     // -------------------------------------------------------------------------
-    // GET /api/products/low-stock
+    // GET /api/v1/products/low-stock
     // -------------------------------------------------------------------------
 
     @Test
@@ -385,7 +385,7 @@ class ProductControllerTest {
         when(service.findLowStock(isNull(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(marshallResponse())));
 
-        mockMvc.perform(get("/api/products/low-stock"))
+        mockMvc.perform(get("/api/v1/products/low-stock"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Marshall DSL40CR"))
                 .andExpect(jsonPath("$.content[0].stock").value(3));
@@ -401,7 +401,7 @@ class ProductControllerTest {
         when(service.findLowStock(eq(2), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(voxResponse)));
 
-        mockMvc.perform(get("/api/products/low-stock").param("min", "2"))
+        mockMvc.perform(get("/api/v1/products/low-stock").param("min", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("Vox AC30"));
@@ -413,7 +413,7 @@ class ProductControllerTest {
     void GET_findLowStock_retornaListaVaciaSiTodosLosInstrumentosTienenStock() throws Exception {
         when(service.findLowStock(isNull(), any(Pageable.class))).thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/products/low-stock"))
+        mockMvc.perform(get("/api/v1/products/low-stock"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
     }

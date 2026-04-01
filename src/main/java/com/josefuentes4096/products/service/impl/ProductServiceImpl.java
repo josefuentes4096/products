@@ -128,4 +128,9 @@ public class ProductServiceImpl implements ProductService {
         product.setStock(product.getStock() - quantity);
         return mapper.toDTO(repository.save(product));
     }
+
+    @Override
+    public Product getReference(Integer id) {
+        return repository.getReferenceById(id);
+    }
 }
