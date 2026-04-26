@@ -23,7 +23,7 @@ function App() {
   return (
     <AuthProvider>
       <CarritoProvider>
-        <BrowserRouter basename="/mi-ecommerce">
+        <BrowserRouter basename="/products">
           <div className="d-flex flex-column min-vh-100">
             <NavBar />
             <main className="container flex-grow-1 py-4">
