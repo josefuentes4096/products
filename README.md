@@ -9,6 +9,17 @@ Aplicación full-stack para gestión de un catálogo de productos (guitarras el�
 
 > Para la guía completa de despliegue desde cero (con troubleshooting de los problemas más comunes), ver **[`DEPLOY.md`](DEPLOY.md)**.
 
+## Demo en vivo
+
+- **Frontend**: https://josefuentes4096.github.io/products/
+- **API**: https://products-k2x6.onrender.com/api/v1/products
+- **Docs interactivas (Swagger UI)**: https://products-k2x6.onrender.com/swagger-ui/index.html
+- **Healthcheck**: https://products-k2x6.onrender.com/actuator/health
+
+> Estas URLs corresponden al despliegue del fork original. Si haces tu propio fork, tendrás URLs distintas — ver [`DEPLOY.md`](DEPLOY.md).
+>
+> Nota: ambos servicios están en plan free y se suspenden tras inactividad. El primer request tras dormir tarda **~30 s en Render + 5–15 s en TiDB**, hasta ~45 s en total. Insiste si no responde a la primera.
+
 ## Estructura del repositorio
 
 ```
