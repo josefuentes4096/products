@@ -1,62 +1,74 @@
--- Setup completo: schema + datos de ejemplo (PostgreSQL)
+-- Setup completo: schema + datos de ejemplo (MySQL / TiDB Serverless)
 -- Guitarras electricas, pedales de efecto y amplificadores valvulares
 
 -- -------------------------------------------------------------------------
--- Schema
+-- Schema (idempotente; redundante si Flyway ya ejecuto V1)
 -- -------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS settings (
-    id            SERIAL       PRIMARY KEY,
+    id            INT          NOT NULL AUTO_INCREMENT,
     setting_key   VARCHAR(100) NOT NULL,
     setting_value VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT uq_settings_key UNIQUE (setting_key)
 );
 
 CREATE TABLE IF NOT EXISTS product (
-    id          SERIAL          PRIMARY KEY,
+    id          INT             NOT NULL AUTO_INCREMENT,
     nombre      VARCHAR(255)    NOT NULL,
     descripcion TEXT,
-    precio      NUMERIC(10, 2)  NOT NULL,
+    precio      DECIMAL(10, 2)  NOT NULL,
     categoria   VARCHAR(100),
     imagen_url  VARCHAR(500),
-    stock       INTEGER         NOT NULL DEFAULT 0,
-    created_at  TIMESTAMP,
-    updated_at  TIMESTAMP
+    stock       INT             NOT NULL DEFAULT 0,
+    created_at  DATETIME,
+    updated_at  DATETIME,
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS orders (
-    id          SERIAL          PRIMARY KEY,
-    usuario_id  INTEGER         NOT NULL,
+    id          INT             NOT NULL AUTO_INCREMENT,
+    usuario_id  INT             NOT NULL,
     estado      VARCHAR(50)     NOT NULL,
-    total       NUMERIC(10, 2)  NOT NULL,
-    created_at  TIMESTAMP,
-    updated_at  TIMESTAMP
+    total       DECIMAL(10, 2)  NOT NULL,
+    created_at  DATETIME,
+    updated_at  DATETIME,
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS order_item (
-    id         SERIAL         PRIMARY KEY,
-    order_id   INTEGER        NOT NULL,
-    product_id INTEGER        NOT NULL,
-    cantidad   INTEGER        NOT NULL,
-    unit_price NUMERIC(10, 2) NOT NULL,
-    subtotal   NUMERIC(10, 2) NOT NULL,
+    id         INT            NOT NULL AUTO_INCREMENT,
+    order_id   INT            NOT NULL,
+    product_id INT            NOT NULL,
+    cantidad   INT            NOT NULL,
+    unit_price DECIMAL(10, 2) NOT NULL,
+    subtotal   DECIMAL(10, 2) NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT fk_orderitem_order   FOREIGN KEY (order_id)   REFERENCES orders (id),
     CONSTRAINT fk_orderitem_product FOREIGN KEY (product_id) REFERENCES product (id)
 );
 
 -- -------------------------------------------------------------------------
--- Configuracion
+-- Configuracion (idempotente: INSERT IGNORE evita choque con V2 de Flyway)
 -- -------------------------------------------------------------------------
 
-INSERT INTO settings (setting_key, setting_value)
-VALUES ('minimum_stock', '5')
-ON CONFLICT (setting_key) DO NOTHING;
+INSERT IGNORE INTO settings (setting_key, setting_value)
+VALUES ('minimum_stock', '5');
+
+-- -------------------------------------------------------------------------
+-- Reset de productos (permite re-ejecutar el script sin duplicar filas)
+-- FOREIGN_KEY_CHECKS=0 es necesario porque order_item tiene FK a product
+-- -------------------------------------------------------------------------
+
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE order_item;
+TRUNCATE TABLE orders;
+TRUNCATE TABLE product;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- -------------------------------------------------------------------------
 -- Datos de ejemplo
 -- -------------------------------------------------------------------------
-
-TRUNCATE TABLE product RESTART IDENTITY CASCADE;
 
 INSERT INTO product (nombre, descripcion, precio, categoria, imagen_url, stock, created_at, updated_at) VALUES
 -- Guitarras electricas

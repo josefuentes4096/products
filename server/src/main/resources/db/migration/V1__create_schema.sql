@@ -1,38 +1,42 @@
 CREATE TABLE IF NOT EXISTS product (
-    id          SERIAL          PRIMARY KEY,
+    id          INT             NOT NULL AUTO_INCREMENT,
     nombre      VARCHAR(255)    NOT NULL,
     descripcion TEXT            NOT NULL,
-    precio      NUMERIC(19, 2)  NOT NULL,
+    precio      DECIMAL(19, 2)  NOT NULL,
     categoria   VARCHAR(100),
     imagen_url  VARCHAR(500),
-    stock       INTEGER         NOT NULL,
-    created_at  TIMESTAMP,
-    updated_at  TIMESTAMP
+    stock       INT             NOT NULL,
+    created_at  DATETIME,
+    updated_at  DATETIME,
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS orders (
-    id          SERIAL          PRIMARY KEY,
-    usuario_id  INTEGER         NOT NULL,
+    id          INT             NOT NULL AUTO_INCREMENT,
+    usuario_id  INT             NOT NULL,
     estado      VARCHAR(20)     NOT NULL,
-    total       NUMERIC(19, 2)  NOT NULL,
-    created_at  TIMESTAMP,
-    updated_at  TIMESTAMP
+    total       DECIMAL(19, 2)  NOT NULL,
+    created_at  DATETIME,
+    updated_at  DATETIME,
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS order_item (
-    id         SERIAL          PRIMARY KEY,
-    order_id   INTEGER         NOT NULL,
-    product_id INTEGER         NOT NULL,
-    cantidad   INTEGER         NOT NULL,
-    unit_price NUMERIC(19, 2)  NOT NULL,
-    subtotal   NUMERIC(19, 2)  NOT NULL,
+    id         INT             NOT NULL AUTO_INCREMENT,
+    order_id   INT             NOT NULL,
+    product_id INT             NOT NULL,
+    cantidad   INT             NOT NULL,
+    unit_price DECIMAL(19, 2)  NOT NULL,
+    subtotal   DECIMAL(19, 2)  NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT fk_order_item_order   FOREIGN KEY (order_id)   REFERENCES orders (id),
     CONSTRAINT fk_order_item_product FOREIGN KEY (product_id) REFERENCES product (id)
 );
 
 CREATE TABLE IF NOT EXISTS settings (
-    id            SERIAL       PRIMARY KEY,
+    id            INT          NOT NULL AUTO_INCREMENT,
     setting_key   VARCHAR(100) NOT NULL,
     setting_value VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id),
     CONSTRAINT uq_settings_key UNIQUE (setting_key)
 );
