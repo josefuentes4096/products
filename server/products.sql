@@ -1,8 +1,19 @@
--- Setup completo: schema + datos de ejemplo (MySQL / TiDB Serverless)
+-- =========================================================================
+-- products.sql — Setup completo para MySQL / TiDB Serverless
 -- Guitarras electricas, pedales de efecto y amplificadores valvulares
+--
+-- Pensado para ejecutarse despues de que Flyway haya creado el schema
+-- (V1__create_schema.sql + V2__seed_settings.sql) en el primer arranque
+-- de la app. Las sentencias CREATE TABLE / INSERT IGNORE son idempotentes
+-- y permiten ejecutar este script tambien en una base limpia, sin Flyway.
+--
+-- Re-ejecutable: el bloque TRUNCATE limpia los datos previos antes de
+-- cargar los seeds. NOTA: TiDB asigna IDs en lotes (gaps de 30000 entre
+-- sesiones), asi que no esperes ids contiguos como 1,2,3,...
+-- =========================================================================
 
 -- -------------------------------------------------------------------------
--- Schema (idempotente; redundante si Flyway ya ejecuto V1)
+-- Schema (idempotente; no-op si Flyway ya ejecuto V1)
 -- -------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS settings (

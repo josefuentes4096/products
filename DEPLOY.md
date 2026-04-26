@@ -3,8 +3,8 @@
 Despliegue del proyecto desde cero, asumiendo que partes de un fork limpio de este repositorio. Coste: **0 €**.
 
 **Stack final:**
-- Base de datos: Neon (PostgreSQL serverless, free)
-- Backend: Render (Docker web service, free)
+- Base de datos: TiDB Cloud Serverless (MySQL-compatible, free tier)
+- Backend: Render (Docker web service, free tier)
 - Frontend: GitHub Pages (servicio estático)
 
 **Tiempo estimado:** 30–45 minutos la primera vez.
@@ -14,10 +14,10 @@ Despliegue del proyecto desde cero, asumiendo que partes de un fork limpio de es
 ## Prerrequisitos
 
 - Cuenta en [GitHub](https://github.com)
-- Cuenta en [Neon](https://neon.tech)
+- Cuenta en [TiDB Cloud](https://tidbcloud.com) (puedes registrarte con GitHub)
 - Cuenta en [Render](https://render.com)
 - Git instalado en local
-- (Opcional) `psql` o cliente PostgreSQL si prefieres cargar la BD por terminal en lugar de por web
+- (Opcional) cliente MySQL — `mysql` CLI, MySQL Workbench, DBeaver, o el SQL Editor del propio TiDB Cloud
 
 ---
 
@@ -34,21 +34,33 @@ Despliegue del proyecto desde cero, asumiendo que partes de un fork limpio de es
 
 ---
 
-## 2. Crear la base de datos en Neon
+## 2. Crear el cluster en TiDB Serverless
 
-1. Login en [console.neon.tech](https://console.neon.tech).
-2. **Create project**: nombre libre, región la más cercana a tu backend (si vas a usar Render Frankfurt, elige una región europea o de Sudamérica como `sa-east-1`).
-3. Una vez creado, en el panel del proyecto verás una **Connection string** parecida a:
-   ```
-   postgresql://neondb_owner:npg_XXXXXXXXXXXX@ep-abc-def-pooler.region.aws.neon.tech/neondb?sslmode=require
-   ```
-4. **Anota tres datos** (vas a necesitarlos en el paso 4):
-   - **Host + database + params**: `ep-abc-def-pooler.region.aws.neon.tech/neondb?sslmode=require&channelBinding=require`
-     - Si la URL de Neon no incluye `channelBinding=require`, añádelo a mano. Neon lo recomienda para mayor seguridad.
-   - **Usuario**: `neondb_owner` (suele ser este por defecto)
-   - **Contraseña**: la cadena que empieza por `npg_...`
+1. Login en [tidbcloud.com](https://tidbcloud.com) (con GitHub o email).
+2. **Create Cluster** → tipo **Serverless** → región más cercana al backend que vas a usar (si Render Frankfurt, elige `eu-central-1`; si Render US/SA, `us-east-1` o `us-west-2`).
+3. Nombre libre, plan **Free**. **Create Cluster**.
+4. Una vez creado, click en el cluster → botón **Connect** (arriba a la derecha) → pestaña **General** → en el dropdown **Connect With** elige **General**.
+5. **Anota tres datos** (vas a necesitarlos en el paso 4):
+   - **Host + puerto**: algo como `gateway01.us-east-1.prod.aws.tidbcloud.com:4000`
+   - **Usuario**: incluye un prefijo del cluster, formato `<cluster_id>.<usuario>` (ej. `2U3ATWFK5HzW6Tk.root`)
+   - **Password**: si es la primera vez, TiDB te ofrece **Generate Password** y la muestra una sola vez. Anótala.
 
-> **Seguridad**: si en algún momento esa contraseña queda expuesta (commit, log, captura), rótala desde Neon → **Roles** → tu rol → **Reset password**. La contraseña vieja queda invalidada al instante.
+> **Seguridad**: si en algún momento esa password queda expuesta, regénerala desde el botón **Reset Password** en el mismo diálogo de Connect. La password vieja queda invalidada al instante.
+
+### 2.1. Crear la base de datos `products`
+
+Por defecto TiDB conecta a `sys` (sistema). Necesitas una base dedicada.
+
+1. En TiDB Cloud → tu cluster → menú lateral **SQL Editor** (también llamado **Chat2Query** en algunas regiones).
+2. Ejecuta:
+   ```sql
+   CREATE DATABASE products;
+   ```
+3. Verifica:
+   ```sql
+   SHOW DATABASES;
+   ```
+   Debe aparecer `products` en la lista.
 
 ---
 
@@ -58,47 +70,42 @@ El backend, al arrancar por primera vez, ejecutará Flyway y creará el esquema 
 
 **Tres formas de hacerlo. La A es la más fácil.**
 
-### A) Neon SQL Editor (recomendada, sin instalar nada)
+### A) SQL Editor de TiDB Cloud (recomendada, sin instalar nada)
 
-1. Neon dashboard → tu proyecto → menú lateral **SQL Editor**.
-2. Selecciona el branch (`production` por defecto) y la database (`neondb`).
+1. TiDB Cloud → tu cluster → **SQL Editor**.
+2. Selecciona la database `products` en el dropdown superior (no `sys`).
 3. Antes de cargar nada, comprueba si ya hay datos:
    ```sql
    SELECT count(*) FROM product;
    ```
-   - Si la tabla no existe → ejecuta `products.sql` directo (paso 5).
-   - Si existe y devuelve `0` → carga `products.sql`.
-   - Si devuelve `>0` → primero limpia para no duplicar:
-     ```sql
-     TRUNCATE order_item, orders, product RESTART IDENTITY CASCADE;
-     ```
-4. Abre `server/products.sql` en tu editor local, copia todo el contenido (81 líneas).
-5. Pégalo en el SQL Editor de Neon y dale a **Run**.
+   - Si la tabla no existe (`Table 'products.product' doesn't exist`) → ve directo al paso 4. El propio script crea las tablas.
+   - Si existe y devuelve `0` → ve al paso 4.
+   - Si devuelve `>0` → el script las trunca antes de insertar (con `FOREIGN_KEY_CHECKS=0`), no necesitas hacer nada extra.
+4. Abre `server/products.sql` en tu editor local, copia todo el contenido.
+5. Pégalo en el SQL Editor de TiDB y dale a **Run**.
 6. Verifica:
    ```sql
    SELECT count(*) FROM product;
    SELECT nombre, categoria, stock FROM product ORDER BY id LIMIT 5;
    ```
-   Deberías ver 14 productos entre guitarras, pedales y amplificadores.
+   Deberías ver 14 productos entre guitarras, pedales y amplificadores. **No esperes IDs `1,2,3...`** — TiDB asigna IDs en lotes (gaps de hasta 30000 entre sesiones); el primer producto puede tener `id=30001`. Es normal y no afecta a la app.
 
-### B) `psql` desde la terminal
+### B) `mysql` CLI desde la terminal
 
-Requiere PostgreSQL client instalado (Windows: `winget install PostgreSQL.PostgreSQL` y marca "Command Line Tools" en el wizard).
-
-```bash
-psql "postgresql://neondb_owner:<TU-PASS>@ep-abc-def-pooler.region.aws.neon.tech/neondb?sslmode=require" \
-  -f server/products.sql
-```
-
-Las comillas son obligatorias (la URL contiene caracteres especiales).
-
-### C) Neon CLI
+Requiere cliente MySQL instalado (Windows: `winget install Oracle.MySQL` o el "MySQL Shell"; macOS: `brew install mysql-client`).
 
 ```bash
-npm install -g neonctl
-neonctl auth
-neonctl sql --project-id <TU-PROJECT-ID> -f server/products.sql
+mysql -h gateway01.us-east-1.prod.aws.tidbcloud.com -P 4000 \
+      -u "<CLUSTER_ID>.root" -p \
+      --ssl-mode=VERIFY_IDENTITY \
+      products < server/products.sql
 ```
+
+(Te pedirá la password interactivamente. El flag `--ssl-mode=VERIFY_IDENTITY` es obligatorio en TiDB Serverless.)
+
+### C) Cliente gráfico (MySQL Workbench, DBeaver, TablePlus)
+
+Conecta usando los datos del paso 2.5, marca **SSL: Require** o **VERIFY_IDENTITY** (varía por cliente), abre `server/products.sql` y ejecútalo entero.
 
 ---
 
@@ -122,17 +129,19 @@ neonctl sql --project-id <TU-PROJECT-ID> -f server/products.sql
 3. Render detecta `render.yaml` y propone crear `products-api` (Docker, root `server/`, region Frankfurt, plan free, healthcheck `/actuator/health`).
 4. Te pedirá rellenar las 4 env vars marcadas como `sync: false`:
 
-   | Variable        | Valor                                                                                                  |
-   |-----------------|--------------------------------------------------------------------------------------------------------|
-   | `DB_URL`        | `jdbc:postgresql://ep-abc-def-pooler.region.aws.neon.tech/neondb?sslmode=require&channelBinding=require` (host de tu Neon, con prefijo `jdbc:`) |
-   | `DB_USERNAME`   | `neondb_owner` (o el usuario que te dé Neon)                                                           |
-   | `DB_PASSWORD`   | Tu password de Neon (el `npg_...`)                                                                     |
-   | `CORS_ORIGINS`  | `http://localhost:5173` por ahora — lo cambiaremos al final cuando tengas la URL de GitHub Pages       |
+   | Variable        | Valor                                                                                                                                  |
+   |-----------------|----------------------------------------------------------------------------------------------------------------------------------------|
+   | `DB_URL`        | `jdbc:mysql://<HOST>:4000/products?sslMode=VERIFY_IDENTITY&enabledTLSProtocols=TLSv1.2,TLSv1.3` (sustituye `<HOST>` por el de TiDB)    |
+   | `DB_USERNAME`   | `<CLUSTER_ID>.root` (el usuario completo con el prefijo del cluster)                                                                   |
+   | `DB_PASSWORD`   | Tu password de TiDB                                                                                                                    |
+   | `CORS_ORIGINS`  | `http://localhost:5173` por ahora — lo cambiaremos al final cuando tengas la URL de GitHub Pages                                       |
 
    Detalles importantes sobre `DB_URL`:
-   - **Lleva el prefijo `jdbc:`** delante de `postgresql://...`
+   - **Lleva el prefijo `jdbc:`** delante de `mysql://...`
+   - **Termina en `/products`**, NO en `/sys`
    - **No incluye usuario ni contraseña en la URL** — van separados en `DB_USERNAME` y `DB_PASSWORD`
-   - **Mantén `?sslmode=require&channelBinding=require`** (Neon exige TLS)
+   - **`sslMode=VERIFY_IDENTITY`** es obligatorio (TiDB rechaza conexiones sin TLS). Si por algún motivo da problemas con la cadena de CAs, prueba `sslMode=REQUIRED` (menos estricto pero igualmente cifrado).
+   - **`enabledTLSProtocols=TLSv1.2,TLSv1.3`** — TiDB no acepta versiones más antiguas de TLS.
 
 5. **Apply**. Render arranca el primer build (descarga deps de Maven + builda Docker, ~5–10 min).
 6. Cuando termine, el servicio queda **Live** (verde, arriba a la derecha) y Render te da una URL del estilo `https://products-api-xxxx.onrender.com`. Anótala.
@@ -144,7 +153,7 @@ curl https://products-api-xxxx.onrender.com/actuator/health
 # Esperado: {"groups":["liveness","readiness"],"status":"UP"}
 
 curl https://products-api-xxxx.onrender.com/api/v1/products
-# Esperado: {"content":[{"id":1,"name":"Fender Stratocaster ...
+# Esperado: {"content":[{"id":30001,"name":"Fender Stratocaster ...
 ```
 
 Si algo va mal aquí, salta al apartado **Troubleshooting** al final.
@@ -250,9 +259,21 @@ Si los 4 pasos pasan, deploy completo.
   ```
   `git update-index --chmod=+x` cambia el modo en el índice de git sin tocar el archivo en disco — funciona perfecto desde Windows.
 
+**`Communications link failure` o `SSL handshake error` al arrancar contra TiDB**
+- Causa: la URL de conexión no incluye los parámetros TLS que TiDB exige.
+- Fix: confirma que `DB_URL` contiene `sslMode=VERIFY_IDENTITY&enabledTLSProtocols=TLSv1.2,TLSv1.3`. Si `VERIFY_IDENTITY` falla con un error de CA cert, baja a `sslMode=REQUIRED` — sigue cifrado, sólo no valida la cadena de certificados.
+
+**`Unknown database 'sys'` o `Unknown database 'products'`**
+- Causa: la URL apunta a `sys` (sistema, no debes usarla) o no creaste la base `products` en TiDB.
+- Fix: ejecuta `CREATE DATABASE products;` en el SQL Editor (paso 2.1) y asegúrate de que `DB_URL` termina en `/products`.
+
+**`Access denied for user 'root'@'%'`**
+- Causa: el usuario no incluye el prefijo del cluster.
+- Fix: TiDB Serverless requiere usuario con formato `<CLUSTER_ID>.root`, no `root` a secas. El cluster ID lo ves en el diálogo Connect.
+
 **`AggregatedClassLoader.findClass` en el stack al arrancar la app**
 - Causa: alguna línea del `application.properties` referencia una clase de Hibernate por nombre corto (sin paquete). Hibernate 7 (Spring Boot 4) exige FQN.
-- Fix más común: si tienes `spring.jpa.properties.hibernate.dialect=PostgreSQLDialect`, **bórrala**. Spring Boot 4 + driver PostgreSQL auto-detecta el dialect correcto.
+- Fix: si tienes `spring.jpa.properties.hibernate.dialect=...` con un nombre sin paquete, **bórrala**. Spring Boot 4 + driver MySQL auto-detecta el dialect correcto.
 
 ### Push a GitHub
 
@@ -295,24 +316,34 @@ Si los 4 pasos pasan, deploy completo.
   SET imagen_url = REPLACE(imagen_url, 'placehold.co/400x300?text=', 'picsum.photos/seed/');
   ```
 
+### Comportamiento específico de TiDB
+
+**Los IDs no son consecutivos (`1, 2, 3, ...`) sino con saltos enormes (`30001, 30002, 60001, ...`)**
+- Causa: comportamiento normal y esperado en TiDB. Cada sesión reserva un lote de 30000 IDs por adelantado para evitar contención en cluster distribuido.
+- Fix: ninguno necesario. La aplicación trata los IDs como opacos, no asume continuidad. Si lo ves raro en la BD, ignóralo.
+
+**Cold start lento la primera vez tras inactividad**
+- Causa: TiDB Serverless free tier escala a cero tras inactividad. La primera conexión tras dormir tarda 5–15 segundos en levantar el cluster.
+- Fix: el `connection-timeout=30000` en `application.properties` lo absorbe. Si necesitas latencia constante, mantén el cluster vivo con un cron externo (UptimeRobot pegando a `/actuator/health` cada 10 min).
+
 ---
 
 ## Costes y limitaciones del plan gratuito
 
+- **TiDB Serverless free**: 5 GB de storage + 50M Request Units/mes. Auto-suspende tras inactividad (cold start ~5–15 s al despertar). MySQL-wire-compatible: cualquier driver MySQL estándar funciona.
 - **Render free**: el servicio se suspende tras inactividad. El primer request tras dormir tarda ~30 s (Spring Boot tiene que arrancar). Si necesitas latencia constante, configura un cron externo (UptimeRobot) que pegue a `/actuator/health` cada 10 minutos.
-- **Neon free**: el endpoint también auto-suspende. El driver puede dar timeout en frío; el `connection-timeout=30000` en `application.properties` lo absorbe.
 - **GitHub Pages**: sin límites prácticos para uso personal (100 GB/mes blandos), pero sin previews por PR ni headers HTTP custom. Si te interesan esas features, considera Vercel o Cloudflare Pages.
 
 ---
 
 ## Variables de entorno (referencia rápida)
 
-| Variable           | Dónde         | Descripción                                                | Default local                                  |
-|--------------------|---------------|------------------------------------------------------------|------------------------------------------------|
-| `DB_URL`           | Render        | JDBC URL de Postgres (con prefijo `jdbc:`)                 | `jdbc:postgresql://localhost:5432/products`    |
-| `DB_USERNAME`      | Render / .env | Usuario de la BD                                           | `postgres`                                     |
-| `DB_PASSWORD`      | Render / .env | Password de la BD                                          | `postgres`                                     |
-| `CORS_ORIGINS`     | Render        | Orígenes permitidos (coma-separados)                       | `http://localhost:5173,http://localhost:4173`  |
-| `SHOW_SQL`         | Render        | Log de SQL de Hibernate (true/false)                       | `false`                                        |
-| `PORT`             | Render        | Puerto HTTP (Render lo inyecta automáticamente)            | `8080`                                         |
-| `VITE_API_URL`     | GitHub Actions| URL base del backend (sin `/api/v1`)                       | `http://localhost:8080`                        |
+| Variable           | Dónde         | Descripción                                                                  | Default local                                  |
+|--------------------|---------------|------------------------------------------------------------------------------|------------------------------------------------|
+| `DB_URL`           | Render        | JDBC URL de MySQL/TiDB (con prefijo `jdbc:` y params TLS)                    | `jdbc:mysql://localhost:3306/products`         |
+| `DB_USERNAME`      | Render / .env | Usuario de la BD (en TiDB: `<CLUSTER_ID>.root`)                              | `root`                                         |
+| `DB_PASSWORD`      | Render / .env | Password de la BD                                                            | `root`                                         |
+| `CORS_ORIGINS`     | Render        | Orígenes permitidos (coma-separados)                                         | `http://localhost:5173,http://localhost:4173`  |
+| `SHOW_SQL`         | Render        | Log de SQL de Hibernate (true/false)                                         | `false`                                        |
+| `PORT`             | Render        | Puerto HTTP (Render lo inyecta automáticamente)                              | `8080`                                         |
+| `VITE_API_URL`     | GitHub Actions| URL base del backend (sin `/api/v1`)                                         | `http://localhost:8080`                        |
