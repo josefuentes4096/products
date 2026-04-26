@@ -4,8 +4,10 @@ Aplicación full-stack para gestión de un catálogo de productos (guitarras el�
 
 - **Backend**: Java 21 · Spring Boot 4 · Spring Data JPA · Flyway · Spring Security · Caffeine · OpenAPI
 - **Frontend**: React 19 · Vite · React Router · React Bootstrap · Axios
-- **Base de datos**: PostgreSQL 16 (Neon en producción, Docker en local)
-- **Despliegue**: Render (web service Docker) + Neon (PostgreSQL serverless)
+- **Base de datos**: MySQL 8 / TiDB Serverless (MySQL-compatible) · TiDB Cloud en producción, Docker MySQL en local
+- **Despliegue**: Render (backend Docker) + TiDB Cloud (BD serverless) + GitHub Pages (frontend)
+
+> Para la guía completa de despliegue desde cero (con troubleshooting de los problemas más comunes), ver **[`DEPLOY.md`](DEPLOY.md)**.
 
 ## Estructura del repositorio
 
@@ -26,7 +28,7 @@ productos/
     │   ├── application.properties
     │   └── db/migration/  # Flyway (V1 schema, V2 seed)
     ├── Dockerfile         # Multi-stage build
-    ├── docker-compose.yml # Postgres + app para desarrollo local
+    ├── docker-compose.yml # MySQL + app para desarrollo local
     └── products.sql       # Schema + seed de demo
 ```
 
@@ -51,19 +53,19 @@ Documentación interactiva: `/swagger-ui/index.html` · Health: `/actuator/healt
 
 ## Desarrollo local
 
-### Backend (Docker Compose: Postgres + app)
+### Backend (Docker Compose: MySQL + app)
 
 ```bash
 cd server
-cp .env.example .env   # o crea uno con DB_USERNAME / DB_PASSWORD
+cp .env.example .env   # o crea uno con DB_PASSWORD
 docker compose up --build
 ```
 
-App en `http://localhost:8080`, Postgres en `localhost:5432`.
+App en `http://localhost:8080`, MySQL en `localhost:3306` (base `products`, usuario `root`).
 
 ### Backend (sin Docker)
 
-Necesitas Postgres 16 corriendo localmente con una base `products`:
+Necesitas MySQL 8 corriendo localmente con una base `products`:
 
 ```bash
 cd server
@@ -90,72 +92,39 @@ cd server && ./mvnw test
 cd client && npm test
 ```
 
-## Despliegue en producción (Render + Neon)
+## Despliegue en producción
 
-### 1. Crear la base de datos en Neon
+El paso a paso completo (con troubleshooting de los problemas reales que aparecen con TiDB, Render y GitHub Pages) está en **[`DEPLOY.md`](DEPLOY.md)**. Resumen del flujo:
 
-1. Crea un proyecto en [neon.tech](https://neon.tech).
-2. Copia la cadena de conexión JDBC y conviértela a formato Spring:
-   `jdbc:postgresql://ep-xxx.region.aws.neon.tech/products?sslmode=require&channelBinding=require`
-3. Anota usuario y password.
+1. **TiDB Cloud** — crear cluster Serverless, crear la base `products`, anotar host/usuario/password.
+2. **Render** — conectar la GitHub App al fork, crear Blueprint, rellenar `DB_URL` (formato `jdbc:mysql://<host>:4000/products?sslMode=VERIFY_IDENTITY&enabledTLSProtocols=TLSv1.2,TLSv1.3`), `DB_USERNAME` (con prefijo `<CLUSTER_ID>.root`), `DB_PASSWORD`, `CORS_ORIGINS`.
+3. **GitHub Pages** — Settings → Pages → Source: GitHub Actions, crear repo variable `VITE_API_URL` con la URL de Render, push.
+4. **CORS** — añadir `https://<TU-USUARIO>.github.io` a `CORS_ORIGINS` en Render.
 
-(Opcional) Carga los datos de demo desde tu máquina:
-
-```bash
-psql "postgresql://USER:PASS@ep-xxx.region.aws.neon.tech/products?sslmode=require" \
-  -f server/products.sql
-```
-
-Si no lo cargas, Flyway creará el schema vacío (V1) y el setting por defecto (V2) en el primer arranque.
-
-### 2. Desplegar el backend en Render
-
-Opción A — `render.yaml` (recomendado):
-
-1. Sube el repo a GitHub.
-2. En Render, crea un nuevo Blueprint apuntando a este repo.
-3. Render detecta `render.yaml` (en la raíz, con `rootDir: server`) y crea el web service.
-4. Configura las env vars marcadas `sync: false`:
-   - `DB_URL` — cadena JDBC de Neon
-   - `DB_USERNAME` — usuario de Neon
-   - `DB_PASSWORD` — password de Neon
-   - `CORS_ORIGINS` — URL del frontend desplegado (ej. `https://mi-app.vercel.app`)
-
-Opción B — manual:
-
-1. New → Web Service → Docker → conecta el repo.
-2. Root Directory: `server`.
-3. Health Check Path: `/actuator/health`.
-4. Añade las mismas env vars del punto anterior.
-
-### 3. Desplegar el frontend
-
-Cualquier hosting estático (Vercel, Netlify, Cloudflare Pages, GitHub Pages):
+(Opcional) Cargar los datos de demo en TiDB desde el SQL Editor de TiDB Cloud o con cliente MySQL:
 
 ```bash
-cd client
-npm run build   # genera dist/
+mysql -h <HOST> -P 4000 -u "<CLUSTER_ID>.root" -p \
+      --ssl-mode=VERIFY_IDENTITY \
+      products < server/products.sql
 ```
 
-Configura la URL del backend en el `.env` del cliente antes de buildear (sin sufijo `/api/v1`, el cliente lo añade):
-
-```
-VITE_API_URL=https://products-api.onrender.com
-```
+Si no lo cargas, Flyway crea el schema vacío (V1) y el setting por defecto (V2) en el primer arranque.
 
 ## Notas sobre el plan gratuito
 
 - **Render free** suspende el servicio tras inactividad: el primer request tras dormir tarda ~30 s. Si necesitas latencia constante, usa un cron externo (UptimeRobot) que pegue a `/actuator/health` cada 10 minutos.
-- **Neon free** también auto-suspende el endpoint. El driver puede dar timeout en frío; el `connection-timeout=30000` ya configurado en `application.properties` lo absorbe.
-- Neon **exige TLS**: `sslmode=require` es obligatorio en la URL.
+- **TiDB Serverless free** también auto-suspende (cold start ~5–15 s al despertar). El `connection-timeout=30000` ya configurado en `application.properties` lo absorbe. Cuota: 5 GB storage + 50M Request Units/mes.
+- TiDB **exige TLS**: `sslMode=VERIFY_IDENTITY` (o como mínimo `REQUIRED`) es obligatorio en la URL JDBC.
+- TiDB asigna IDs en lotes de 30000; no esperes valores contiguos como `1, 2, 3` (la app trata IDs como opacos, no afecta).
 
 ## Variables de entorno (resumen)
 
 | Variable           | Dónde         | Descripción                                            | Default local                              |
 |--------------------|---------------|--------------------------------------------------------|--------------------------------------------|
-| `DB_URL`           | server        | JDBC URL de Postgres                                   | `jdbc:postgresql://localhost:5432/products`|
-| `DB_USERNAME`      | server        | Usuario BD                                             | `postgres`                                 |
-| `DB_PASSWORD`      | server        | Password BD                                            | `postgres`                                 |
+| `DB_URL`           | server        | JDBC URL de MySQL/TiDB                                 | `jdbc:mysql://localhost:3306/products`     |
+| `DB_USERNAME`      | server        | Usuario BD (en TiDB: `<CLUSTER_ID>.root`)              | `root`                                     |
+| `DB_PASSWORD`      | server        | Password BD                                            | `root`                                     |
 | `CORS_ORIGINS`     | server        | Orígenes permitidos (coma-separados)                   | `http://localhost:5173,http://localhost:4173` |
 | `SHOW_SQL`         | server        | Log de SQL de Hibernate                                | `false`                                    |
 | `PORT`             | server        | Puerto HTTP (Render lo inyecta)                        | `8080`                                     |
